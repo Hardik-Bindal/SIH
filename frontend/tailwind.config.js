@@ -1,0 +1,127 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,jsx}'],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        // Semantic tokens driven by CSS variables — light/dark themed via .dark class
+        bg: 'rgb(var(--color-bg) / <alpha-value>)',
+        surface: 'rgb(var(--color-surface) / <alpha-value>)',
+        'surface-2': 'rgb(var(--color-surface-2) / <alpha-value>)',
+        'surface-3': 'rgb(var(--color-surface-3) / <alpha-value>)',
+        line: 'rgb(var(--color-line) / <alpha-value>)',
+        'line-2': 'rgb(var(--color-line-2) / <alpha-value>)',
+
+        fg: 'rgb(var(--color-fg) / <alpha-value>)',
+        'fg-2': 'rgb(var(--color-fg-2) / <alpha-value>)',
+        'fg-3': 'rgb(var(--color-fg-3) / <alpha-value>)',
+
+        brand: {
+          50: 'rgb(var(--color-brand-50) / <alpha-value>)',
+          100: 'rgb(var(--color-brand-100) / <alpha-value>)',
+          200: 'rgb(var(--color-brand-200) / <alpha-value>)',
+          300: 'rgb(var(--color-brand-300) / <alpha-value>)',
+          400: 'rgb(var(--color-brand-400) / <alpha-value>)',
+          500: 'rgb(var(--color-brand-500) / <alpha-value>)',
+          600: 'rgb(var(--color-brand-600) / <alpha-value>)',
+          700: 'rgb(var(--color-brand-700) / <alpha-value>)',
+          800: 'rgb(var(--color-brand-800) / <alpha-value>)',
+          900: 'rgb(var(--color-brand-900) / <alpha-value>)',
+          950: 'rgb(var(--color-brand-950) / <alpha-value>)',
+        },
+
+        risk: {
+          low: 'rgb(var(--color-risk-low) / <alpha-value>)',
+          'low-bg': 'rgb(var(--color-risk-low-bg) / <alpha-value>)',
+          'low-border': 'rgb(var(--color-risk-low-border) / <alpha-value>)',
+          'low-solid': 'rgb(var(--color-risk-low-solid) / <alpha-value>)',
+          'low-chart': 'rgb(var(--color-risk-low-chart) / <alpha-value>)',
+          medium: 'rgb(var(--color-risk-medium) / <alpha-value>)',
+          'medium-bg': 'rgb(var(--color-risk-medium-bg) / <alpha-value>)',
+          'medium-border': 'rgb(var(--color-risk-medium-border) / <alpha-value>)',
+          'medium-solid': 'rgb(var(--color-risk-medium-solid) / <alpha-value>)',
+          'medium-chart': 'rgb(var(--color-risk-medium-chart) / <alpha-value>)',
+          high: 'rgb(var(--color-risk-high) / <alpha-value>)',
+          'high-bg': 'rgb(var(--color-risk-high-bg) / <alpha-value>)',
+          'high-border': 'rgb(var(--color-risk-high-border) / <alpha-value>)',
+          'high-solid': 'rgb(var(--color-risk-high-solid) / <alpha-value>)',
+          'high-chart': 'rgb(var(--color-risk-high-chart) / <alpha-value>)',
+          critical: 'rgb(var(--color-risk-critical) / <alpha-value>)',
+          'critical-bg': 'rgb(var(--color-risk-critical-bg) / <alpha-value>)',
+          'critical-border': 'rgb(var(--color-risk-critical-border) / <alpha-value>)',
+          'critical-solid': 'rgb(var(--color-risk-critical-solid) / <alpha-value>)',
+          'critical-chart': 'rgb(var(--color-risk-critical-chart) / <alpha-value>)',
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['"Plus Jakarta Sans Variable"', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
+      fontSize: {
+        '2xs': ['0.6875rem', { lineHeight: '1rem' }],
+      },
+      letterSpacing: { tightest: '-0.045em' },
+      boxShadow: {
+        card: 'var(--shadow-card)',
+        'card-hover': 'var(--shadow-card-hover)',
+        lifted: 'var(--shadow-lifted)',
+        glow: 'var(--shadow-glow)',
+        'glow-lg': 'var(--shadow-glow-lg)',
+        'inner-glow': 'inset 0 1px 0 0 rgb(255 255 255 / 0.08)',
+      },
+      transitionTimingFunction: {
+        'out-standard': 'cubic-bezier(0, 0, 0.2, 1)',
+        'out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        'spring': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+      },
+      transitionDuration: { 180: '180ms', 250: '250ms', 400: '400ms' },
+      backdropBlur: { xs: '2px' },
+      keyframes: {
+        pulseSoft: { '0%, 100%': { opacity: 1 }, '50%': { opacity: 0.55 } },
+        pulseGlow: {
+          '0%, 100%': { boxShadow: '0 0 0 0 rgb(var(--color-risk-critical-solid) / 0.4)' },
+          '50%': { boxShadow: '0 0 0 8px rgb(var(--color-risk-critical-solid) / 0)' },
+        },
+        fadeUp: { from: { opacity: 0, transform: 'translateY(12px)' }, to: { opacity: 1, transform: 'none' } },
+        fadeIn: { from: { opacity: 0 }, to: { opacity: 1 } },
+        slideDown: { from: { opacity: 0, transform: 'translateY(-8px)' }, to: { opacity: 1, transform: 'none' } },
+        shimmer: { '100%': { transform: 'translateX(100%)' } },
+        drift: {
+          '0%, 100%': { transform: 'translate3d(0,0,0) scale(1)' },
+          '50%': { transform: 'translate3d(0,-18px,0) scale(1.06)' },
+        },
+        aurora: {
+          '0%, 100%': { transform: 'translate(0, 0) rotate(0deg)' },
+          '33%': { transform: 'translate(30px, -50px) rotate(120deg)' },
+          '66%': { transform: 'translate(-20px, 20px) rotate(240deg)' },
+        },
+        gradient: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
+        floatSlow: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-8px)' },
+        },
+      },
+      animation: {
+        'pulse-soft': 'pulseSoft 1.6s ease-in-out infinite',
+        'pulse-glow': 'pulseGlow 2s cubic-bezier(0, 0, 0.2, 1) infinite',
+        'fade-up': 'fadeUp 0.5s cubic-bezier(0, 0, 0.2, 1) both',
+        'fade-in': 'fadeIn 0.3s ease-out both',
+        'slide-down': 'slideDown 0.25s cubic-bezier(0, 0, 0.2, 1) both',
+        shimmer: 'shimmer 2s infinite',
+        drift: 'drift 14s ease-in-out infinite',
+        aurora: 'aurora 22s ease infinite',
+        gradient: 'gradient 8s ease infinite',
+        'float-slow': 'floatSlow 4s ease-in-out infinite',
+      },
+      backgroundImage: {
+        'mesh-brand': 'radial-gradient(at 27% 37%, rgb(var(--color-brand-500) / 0.15) 0px, transparent 50%), radial-gradient(at 97% 21%, rgb(var(--color-brand-400) / 0.10) 0px, transparent 50%), radial-gradient(at 52% 99%, rgb(var(--color-brand-600) / 0.12) 0px, transparent 50%)',
+        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+      },
+    },
+  },
+  plugins: [],
+}

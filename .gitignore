@@ -1,0 +1,31 @@
+# Generated ML artifacts (regenerate via the commands in README.md) --
+# keep only the small, human-readable result summaries checked in as
+# evidence of what was actually measured.
+ml/artifacts/*
+!ml/artifacts/.gitkeep
+!ml/artifacts/*_metrics.json
+!ml/artifacts/aggregates.json
+!ml/artifacts/forecast.json
+!ml/artifacts/graph.json
+!ml/artifacts/patterns.json
+
+# Generated processed data (regenerate via ml/pipeline/etl.py)
+data/processed/*
+!data/processed/.gitkeep
+!data/processed/etl_summary.json
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+venv/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# OS / editor
+.DS_Store
+*.log

@@ -1,0 +1,630 @@
+
+SMART INDIA HACKATHON 2026
+SOFTWARE REQUIREMENTS SPECIFICATION  ·  PROTOTYPE
+SIF SENTINEL AI
+AI-Powered Safety Intelligence Platform for SIF Prevention
+Turning thousands of unstructured safety reports into predictive, explainable and actionable intelligence.
+[TABLE START]
+Document Attribute | Detail
+Project Title | SIF Sentinel AI — AI-Powered Safety Intelligence Platform
+Team Name | The Last Commit
+Event | Smart India Hackathon (SIH) 2026
+Problem Domain | Industrial Safety · Serious Injury & Fatality (SIF) Prevention
+Proposing Organisation | Oil India Limited (OIL)
+Category | Software
+Document Type | Prototype Software Requirements Specification (SRS)
+Version | 2.0 (Enhanced)
+Status | Prototype — Design Freeze
+[TABLE END]
+
+This document describes the scope, architecture, data flows, technology stack and feature set of the SIF Sentinel AI prototype. It is a hackathon prototype specification — it deliberately prioritises the intelligence layer over enterprise infrastructure.
+
+
+Table of Contents
+Right-click anywhere in the table below and choose "Update Field" to populate page numbers.
+
+1.  Introduction
+1.1  Purpose of this Document
+This Software Requirements Specification defines what the SIF Sentinel AI prototype does, how it is built, and how it will be demonstrated. It is written for three audiences at once: the SIH evaluation panel who need to judge feasibility and innovation, the domain reviewers from Oil India Limited who need to confirm that the safety logic is credible, and the development team who will build the system against this specification.
+Everything described in Sections 1 to 16 is in scope for the working prototype. Section 23 separates the forward-looking product vision from what will actually be demonstrated, so that no capability is over-claimed.
+1.2  Scope of the Prototype
+SIF Sentinel AI ingests historical and newly reported safety records — Unsafe Acts (UA), Unsafe Conditions (UC), Near Misses and Incidents — and converts each free-text narrative into structured, scored, explainable safety intelligence. The prototype demonstrates the complete journey of a single report:
+A raw narrative is ingested and cleaned.
+The AI engine predicts its Serious Injury & Fatality (SIF) potential and assigns a risk band.
+Hazards, equipment, activity and unsafe conditions are extracted as structured entities.
+The report is mapped to the Life Saving Rules it violates.
+Semantically similar fatal incidents are retrieved from a 14,914-record fatality knowledge base.
+A Fatality Twin projects the escalation path the near miss could have followed.
+Corrective and preventive actions, plus a toolbox talk, are generated automatically.
+Every result rolls up into site, area, activity and department-level dashboards that leadership can act on.
+
+1.3  Definitions, Acronyms and Abbreviations
+[TABLE START]
+Term | Expansion | Meaning in this system
+SIF | Serious Injury & Fatality | An event with the realistic potential to kill or permanently disable a worker.
+SIF Precursor | — | A low-consequence event whose conditions could have produced a fatality had one barrier failed differently.
+UA / UC | Unsafe Act / Unsafe Condition | The two primary categories of proactive safety observation.
+LSR | Life Saving Rules | The nine non-negotiable rules whose violation most often precedes fatality.
+CAPA | Corrective & Preventive Action | The remediation plan generated for a report.
+HSE | Health, Safety & Environment | The department that owns incident review.
+LOTO | Lock-Out Tag-Out | The energy-isolation procedure referenced throughout the demo scenario.
+NER | Named Entity Recognition | The NLP task used to extract hazards, equipment and activities.
+RAG | Retrieval-Augmented Generation | The technique grounding the AI Copilot's answers in real retrieved reports.
+XAI | Explainable AI | Model attribution showing why a risk score was produced.
+TBSA | Total Body Surface Area | Burn severity measure used in the Fatality Twin example.
+[TABLE END]
+
+1.4  References
+IEEE 830-1998 — Recommended Practice for Software Requirements Specifications (document structure).
+OSHA Severe Injury Reports and Fatality Inspection datasets (primary data sources).
+IOGP Report 459 — Life Saving Rules (rule taxonomy used for classification).
+ICMM Critical Control Management Good Practice Guide (barrier-failure model behind the Fatality Twin).
+2.  Problem Statement and Motivation
+2.1  The Operational Problem
+Oil India Limited receives thousands of UA, UC, Near Miss and Incident reports every month. These are reviewed manually and at long intervals. By the time a pattern is visible in a quarterly review, the conditions that produced it have often already escalated.
+The deeper problem is not volume — it is that the most valuable information in a safety report is locked inside free text. A narrative such as "worker contacted energized cable while replacing junction box" contains a hazard, an activity, a barrier failure, a violated Life Saving Rule and a fatality precursor. A conventional reporting system stores it as a row. It does not read it.
+2.2  What Existing Systems Cannot Answer
+[TABLE START]
+Question leadership actually asks | Why current systems fail
+Which of our sites is becoming more dangerous? | Counts are stored, but severity potential is never normalised across sites, so a site with many minor reports looks worse than one with three near-fatal events.
+Which activities are most likely to lead to a fatality? | Activity is buried in narrative text and is rarely a structured field.
+Which Life Saving Rules are violated most often? | Rule mapping is manual, inconsistent between reviewers, and often skipped entirely.
+What hidden patterns exist across locations? | Cross-site correlation requires reading every report — nobody has the time.
+Which safety barriers keep failing? | Barrier failure is implied by the narrative but never captured as data.
+Has this nearly killed someone before? | There is no way to search 15,000 historical fatalities by meaning rather than keyword.
+[TABLE END]
+
+2.3  Our Core Insight
+[TABLE START]
+The prototype is built on one thesisFatalities are rarely surprises. They are near misses that nobody read carefully enough.The same precursor conditions — unexpected energy, unverified isolation, a worker in the line of fire — appear again and again in low-consequence reports long before they appear in a fatality investigation.SIF Sentinel AI reads every report the way an expert safety investigator would, at machine speed, and raises the ones that carry fatal potential before the outcome differs.
+[TABLE END]
+
+2.4  Measurable Impact Targets
+[TABLE START]
+Impact Dimension | Current Baseline | With SIF Sentinel AI
+Time to review one report | 6 – 10 minutes (manual) | Under 2 seconds (automated)
+Review coverage | Sampled subset, quarterly | 100% of reports, continuously
+SIF precursor identification | Reactive, post-incident | Predictive, at time of reporting
+LSR mapping consistency | Reviewer-dependent | Deterministic, model-driven, auditable
+Learning from past fatalities | Institutional memory only | Semantic search across 14,914 fatal cases
+CAPA drafting time | 20 – 40 minutes | Instant draft, human-approved
+[TABLE END]
+3.  Prototype Objectives and Success Criteria
+3.1  Guiding Principle
+This prototype demonstrates intelligence, not infrastructure. Rather than building a partial version of every enterprise feature, it builds a complete version of the reasoning layer — the part that is genuinely hard, genuinely novel, and genuinely difficult to fake in a demonstration.
+3.2  Objectives
+O1 — Understand narratives. Extract structured meaning (hazard, equipment, activity, unsafe condition, barrier failure) from unstructured incident text.
+O2 — Predict severity potential. Assign a calibrated SIF probability and a four-level risk band to every report.
+O3 — Explain every prediction. Never output a score without the evidence that produced it. Trust is the deliverable, not the number.
+O4 — Learn from the dead. Retrieve semantically similar fatal cases so that an officer reviewing a near miss can see what it became elsewhere.
+O5 — Aggregate into decisions. Roll individual predictions up into site, area, activity, department and rule-level intelligence.
+O6 — Forecast, not just report. Project where risk is trending over the coming week.
+O7 — Make it conversational. Let an HSE officer interrogate the entire corpus in natural language.
+O8 — Close the loop. Generate the CAPA, the toolbox talk and the safety bulletin so insight becomes action.
+
+3.3  Success Criteria for the Demonstration
+[TABLE START]
+ID | Success Criterion | Target
+SC-1 | SIF classification quality on held-out data | Recall ≥ 0.90 on SIF-positive class; ROC-AUC ≥ 0.88
+SC-2 | Life Saving Rule mapping accuracy | Micro-F1 ≥ 0.85 across nine rule labels
+SC-3 | Similar-fatality retrieval relevance | ≥ 8 of top 10 judged relevant by domain review
+SC-4 | End-to-end latency for a new report | < 2.0 s from submission to full analysis on screen
+SC-5 | Copilot answer grounding | 100% of answers cite at least one retrieved report ID
+SC-6 | Dashboard interaction responsiveness | < 400 ms for any filter or drill-down
+SC-7 | Demonstration completeness | All ten deliverables in Section 21 shown live, no mock data paths
+[TABLE END]
+3.4  Explicitly Out of Scope for the Prototype
+Stating what we are not building is a deliberate act of engineering honesty, and it protects the demonstration from over-promising.
+Computer-vision analysis of CCTV or drone footage — described as future scope only (Section 23).
+Live IoT sensor ingestion from field hardware.
+Enterprise SSO, Active Directory integration and full role-based access governance (a simplified role model is implemented).
+Multi-tenant deployment, horizontal auto-scaling and disaster recovery.
+Native mobile applications — the dashboard is responsive but browser-based.
+4.  Overall Description
+4.1  Product Perspective
+SIF Sentinel AI is a self-contained web application. It sits logically above an organisation's existing incident reporting system: reports flow in (by bulk import or direct entry), intelligence flows out (through dashboards, an API and generated documents). It does not replace the system of record — it becomes the system of insight.
+4.2  User Classes and Characteristics
+[TABLE START]
+User Class | Technical Skill | Primary Need | Key Features Used
+HSE Officer | Low – Medium | Review reports quickly, understand risk, act correctly | Incident Explorer, SIF score + XAI, Fatality Twin, CAPA generator, Copilot
+Safety Manager | Medium | Spot patterns across sites and crews, drive interventions | Site Intelligence, LSR Analytics, Hazard Heatmap, Bulletin export
+Site / Area Head | Low | Know whether their own area is improving or degrading | Department Safety Score, Area Intelligence, Activity Risk
+Leadership / HOD | Low | One-glance status and forward-looking risk | Executive Dashboard, AI Summary, 7-Day Forecast
+Data / IT Administrator | High | Load data, monitor models, manage users | Ingestion console, model metrics, user management
+[TABLE END]
+
+4.3  Operating Environment
+Client: Any modern evergreen browser (Chrome, Edge, Firefox, Safari) at 1366 × 768 or above; responsive down to tablet width.
+Server: Linux container running Python 3.11, served by Uvicorn behind Nginx; deployable to any Docker host.
+Database: MongoDB 7.x with Atlas Vector Search enabled (local fallback: MongoDB Community with a FAISS side-index).
+Network: HTTPS only; outbound access required to the LLM inference endpoint.
+4.4  Design and Implementation Constraints
+A single database technology (MongoDB) is used for documents, aggregates and vectors — chosen deliberately to keep the prototype stack small enough to build and explain within the hackathon window.
+All AI outputs must be traceable to source records; no answer may be produced that cannot cite the reports it came from.
+Model inference must run on CPU-only hardware so the demonstration does not depend on GPU availability at the venue.
+The system must run fully offline apart from LLM calls, and must degrade gracefully — losing the Copilot must never break the dashboards.
+4.5  Assumptions and Dependencies
+OSHA incident and fatality narratives are a valid proxy for OIL's internal report format; field mapping is handled at ingestion.
+Site, area and department attributes are either present in the data or synthesised consistently for the demonstration corpus, and this is disclosed on screen.
+An LLM inference endpoint is reachable during the demonstration; a cached-response fallback is pre-seeded for the Copilot in case of venue network failure.
+5.  Data Sources and Corpus Design
+5.1  Dataset Overview
+[TABLE START]
+Attribute | Dataset 1 — Incidents | Dataset 2 — Fatalities
+Volume | 4,847 reports | 14,914 reports
+Nature | Mixed-severity incident narratives | Confirmed fatality investigation summaries
+Role in system | Training + operational corpus | Knowledge base + retrieval target
+Primary use | SIF classification, LSR mapping, hazard extraction, trend analysis | Similar-incident retrieval, Fatality Twin grounding, CAPA precedent
+Indexed for vectors | Yes — 384-dim | Yes — 384-dim
+Label source | Derived severity labels + weak supervision from outcome fields | Outcome is the label (fatal by definition)
+[TABLE END]
+
+5.2  Why Two Datasets Matter
+Most safety analytics tools train on one corpus and treat severity as a column. Using two corpora changes what the system can do. The incident set teaches the model what a report looks like across the full severity spectrum. The fatality set gives the model a reference library of outcomes — so when a near miss arrives, the system does not merely score it, it can point to the fourteen times that exact combination of conditions actually killed someone.
+[TABLE START]
+This is the difference judges should noticeA conventional classifier says: this report is high risk.SIF Sentinel AI says: this report is high risk, here are the four phrases that drove that, here are the fourteen fatal cases it resembles at 93% similarity, here is the barrier that failed in all of them, and here is the toolbox talk to run on this shift.
+[TABLE END]
+
+5.3  Data Preparation Pipeline
+[TABLE START]
+Stage | Operation | Output
+1. Acquisition | Load raw CSV/JSON exports; preserve original record identifiers | Raw staging collection
+2. Cleaning | Strip control characters, normalise casing and whitespace, expand safety abbreviations (LOTO, PTW, PPE, TBSA) | Normalised narratives
+3. De-duplication | Near-duplicate detection via MinHash + cosine similarity threshold 0.95 | Unique record set
+4. Enrichment | Derive site, area, department, activity and date fields; attach ingestion metadata | Structured document
+5. Labelling | Map outcome/severity fields to SIF-positive and SIF-negative classes; weak-label ambiguous cases via rule heuristics | Training set
+6. Splitting | Stratified 70 / 15 / 15 train-validation-test split, grouped by site to prevent leakage | Model-ready splits
+7. Embedding | Encode every narrative with all-MiniLM-L6-v2 into 384-dim vectors | Vector index
+[TABLE END]
+5.4  Class Imbalance Strategy
+SIF-positive events are, by their nature, the minority class — which is precisely why naive accuracy is a misleading metric. A model that predicts "not SIF" for everything would score well and be useless. Three measures are applied:
+Class weighting: the loss function penalises missed SIF cases more heavily than false alarms, because in safety a false negative costs a life and a false positive costs an inspection.
+Threshold tuning on recall: the decision threshold is selected on the validation set to maximise recall at a precision floor, not to maximise accuracy.
+Fatality-set augmentation: narratives from the fatality corpus supply additional high-severity training signal that the incident corpus alone cannot provide.
+6.  System Architecture
+6.1  Architectural Overview
+The system follows a five-layer, left-to-right pipeline architecture. Data enters at the left, is progressively enriched as it moves right, and is served to the user at the far right. Each layer is independently replaceable: the AI engine can swap models without the dashboard changing, and the dashboard can be rebuilt without touching the data layer.
+The architecture is deliberately linear because safety intelligence is a refinement problem, not a routing problem — every report follows the same path from raw text to actionable insight. The full-page diagram overleaf shows the complete flow.
+
+6.2  High-Level System Architecture
+
+Figure 1  ·  End-to-end system architecture — data flows left to right through five layers, from raw OSHA corpora to the operational dashboard.
+
+6.3  Layer Responsibilities
+[TABLE START]
+Layer | Responsibility | Key Components | Failure Behaviour
+Data Sources | Supply raw incident, fatality and live-entry records | OSHA corpora, CSV importer, in-app report form | Ingestion queues; no user-facing impact
+ETL Pipeline | Clean, de-duplicate, validate and enrich every record before it reaches a model | Pandas transforms, MinHash de-dup, schema validator | Rejected records quarantined with reason codes
+AI Intelligence Engine | Convert narrative into structured, scored, explained intelligence | SIF classifier, LSR mapper, hazard NER, retriever, RAG copilot, forecaster | Degrades per-model; dashboards keep serving cached analysis
+Service + Data | Expose intelligence over HTTP/WebSocket and persist everything | FastAPI, MongoDB Atlas with vector index, Redis cache | Read-only mode from cache if write path fails
+Presentation | Turn intelligence into a decision a human can act on in seconds | React dashboard, Copilot chat, Leaflet heatmap | Skeleton loaders; last-known-good data shown with timestamp
+[TABLE END]
+
+6.4  Deployment Architecture
+The prototype ships as a Docker Compose stack so that the entire system can be brought up on a single laptop at the venue — an important practical consideration when venue networking is unpredictable.
+
+Figure 2  ·  Deployment topology — containerised services with managed data services and a single external LLM dependency.
+6.5  Design Decisions and Their Rationale
+[TABLE START]
+Decision | Alternative Considered | Why We Chose It
+MongoDB as the single datastore | PostgreSQL + pgvector + separate document store | Narratives, model outputs and vectors all live in one document per report. One database, one query path, zero join complexity, and Atlas Vector Search removes the need for a separate vector service.
+FastAPI over Django/Flask | Django REST Framework | Native async handling of model inference, automatic OpenAPI documentation, and Pydantic validation that mirrors our document schema exactly.
+Fine-tuned encoder over a pure LLM classifier | Prompting an LLM for every score | Deterministic, reproducible, auditable, sub-100 ms on CPU, and free at inference. A safety score must be defensible; an LLM temperature is not.
+RAG over fine-tuned generation | Fine-tuning a generative model on safety text | Every Copilot answer must cite real report IDs. Retrieval makes grounding structural rather than aspirational, and the knowledge base can be updated without retraining.
+Pre-computed dashboard aggregates | Live aggregation on every request | Sub-400 ms dashboard interaction is a demo-critical property. Aggregations are refreshed on write and on schedule.
+[TABLE END]
+7.  Technology Stack
+Every entry below is pinned to a specific role in the system. Nothing is included because it is fashionable; each item earns its place by removing work that would otherwise be built by hand.
+7.1  Frontend
+[TABLE START]
+Technology | Version | Role in the System
+React | 18.3 | Component architecture for all nine dashboard pages; concurrent rendering keeps charts responsive during data updates
+Vite | 5.x | Build tooling and dev server; sub-second hot reload during hackathon iteration
+Tailwind CSS | 3.4 | Utility-first styling enforcing the design system tokens defined in Section 14
+Framer Motion | 11.x | Page transitions, risk-gauge animation, card entrance choreography (180 ms, ease-out)
+Recharts | 2.x | Risk timeline, activity bars, root-cause distribution, forecast series
+Chart.js | 4.x | Radial gauges and donut charts where fine-grained arc control is needed
+Leaflet + react-leaflet | 1.9 / 4.x | Interactive geospatial hazard heatmap with clustered incident markers
+Cytoscape.js | 3.x | Interactive Safety Knowledge Graph rendering and node expansion
+TanStack Query | 5.x | Server-state caching, background refetch, optimistic UI on report submission
+Zustand | 4.x | Lightweight global state for filters shared across dashboard pages
+Lucide React | latest | Consistent icon set across navigation and status indicators
+[TABLE END]
+
+7.2  Backend and AI
+[TABLE START]
+Technology | Version | Role in the System
+Python | 3.11 | Primary backend language
+FastAPI | 0.11x | Async REST + WebSocket API; auto-generated OpenAPI spec
+Uvicorn + Gunicorn | latest | ASGI server with worker management
+Pydantic | 2.x | Request/response validation mirroring MongoDB document schemas
+Hugging Face Transformers | 4.4x | DistilBERT fine-tuning and inference for SIF and LSR classification
+Sentence-Transformers | 3.x | all-MiniLM-L6-v2 encoder producing 384-dimensional narrative embeddings
+PyTorch | 2.x | Training backend for classifier fine-tuning
+ONNX Runtime | 1.x | Quantised CPU inference — roughly 3× faster than raw PyTorch on the demo machine
+scikit-learn | 1.5 | Calibration, threshold tuning, evaluation metrics, TF-IDF baselines
+XGBoost | 2.x | Gradient-boosted ensemble over structured features, blended with the transformer score
+spaCy | 3.7 | Rule-augmented NER for hazards, equipment, activities and unsafe conditions
+LangChain | 0.2 | RAG orchestration: retrieval, context assembly, tool routing, guardrails
+SHAP | 0.45 | Token-level attribution powering the “why is this critical” panel
+Prophet | 1.1 | Seven-day risk forecasting per hazard category
+NetworkX | 3.x | Knowledge graph construction and centrality analysis
+Pandas / NumPy | 2.x | ETL transforms and aggregation
+APScheduler | 3.x | Nightly aggregation refresh and bulletin generation
+ReportLab | 4.x | PDF export for safety bulletins and toolbox talks
+[TABLE END]
+
+7.3  Data, Infrastructure and Tooling
+[TABLE START]
+Technology | Role in the System
+MongoDB 7.x (Atlas) | Single datastore for all seven collections; Atlas Vector Search provides approximate nearest-neighbour retrieval over 19,761 embeddings without a separate vector database
+Redis 7 | Session cache, rate limiting, and hot dashboard aggregate cache
+Docker + Docker Compose | Reproducible local stack; the entire system starts with one command at the venue
+Nginx | Reverse proxy, TLS termination, static asset serving
+Vercel | Frontend hosting and CDN for the React build
+Git + GitHub Actions | Version control; CI runs linting, unit tests and a model-regression check on every push
+Pytest + Vitest | Backend and frontend test suites
+Locust | Load testing against the latency targets in Section 16
+[TABLE END]
+8.  Data Flow Diagrams
+Data flow diagrams are presented at three levels of decomposition, following standard DFD notation: external entities are rectangles, processes are numbered rounded blocks, and data stores are labelled D1 through D6 corresponding exactly to the MongoDB collections defined in Section 9.
+8.1  Level 0 — Context Diagram
+At the highest level, SIF Sentinel AI is a single process mediating between three external entities. The OSHA dataset provider supplies historical evidence; HSE officers supply new reports and receive analysis; management supplies filter intent and receives aggregated intelligence.
+
+Figure 3  ·  DFD Level 0 — system context and external entity interactions.
+
+8.2  Level 1 — Major Process Decomposition
+Level 1 expands the system into six processes and six data stores. Note the deliberate separation of Process 2.0 (AI Analysis) from Process 3.0 (Semantic Indexing): scoring and retrieval are independent concerns, which means a model can be retrained without rebuilding the vector index, and vice versa.
+
+Figure 4  ·  DFD Level 1 — six core processes and the six persistent data stores they read from and write to.
+
+8.3  Level 2 — AI Intelligence Engine (explosion of Process 2.0)
+Level 2 decomposes the AI engine itself. Two branches run in parallel from the pre-processing step — entity extraction and severity classification — before their outputs are fused into a single risk band, explained, and passed to the Fatality Twin simulator for escalation projection.
+
+Figure 5  ·  DFD Level 2 — internal decomposition of the AI Intelligence Engine.
+
+8.4  Process Specifications
+[TABLE START]
+Ref | Process | Input | Processing Logic | Output
+1.0 | Ingest & Clean | Raw CSV/JSON, form submission | Normalise text, expand abbreviations, de-duplicate, validate against schema, enrich metadata | Clean documents → D1, D2
+2.0 | AI Analysis & Scoring | Cleaned narrative (D1) | NER extraction, SIF classification, LSR multi-label mapping, risk fusion, SHAP attribution, Fatality Twin | Analysis document → D3
+3.0 | Semantic Indexing | Narratives (D1, D2) | Encode to 384-dim vectors, upsert into Atlas Vector Search index | Embeddings → D4
+4.0 | Analytics & Aggregation | Analyses (D3), incidents (D1) | Group by site, area, activity, department, rule and time bucket; compute risk indices and safety scores | KPI payloads → D5
+5.0 | Recommendation Engine | Analysis (D3), neighbours (D4) | Retrieve precedent CAPAs from similar fatal cases, synthesise corrective and preventive actions, draft toolbox talk | Recommendations → D6
+6.0 | Visualise & Copilot | Cache (D5), recommendations (D6), embeddings (D4) | Serve dashboard payloads; run RAG loop for conversational queries with citation enforcement | Dashboards, answers, bulletins
+[TABLE END]
+9.  Data Design
+9.1  Collection Model
+Seven collections carry the entire system. The design keeps analysis separate from source data so that a model can be re-run over the corpus without ever mutating the original report — an audit requirement in any safety domain.
+
+Figure 6  ·  MongoDB collection relationships and cardinality.
+9.2  Core Document Schemas
+Incidents (D1)
+[TABLE START]
+{  _id            : ObjectId,  report_id      : "INC-2026-04821",        // stable external key  narrative      : "Worker contacted an energized 415V cable ...",  report_type    : "NEAR_MISS",             // UA | UC | NEAR_MISS | INCIDENT  site           : "Rig-07 Duliajan",  area           : "RIG",                   // RIG | REFINERY | PIPELINE | WAREHOUSE | WORKSHOP  department     : "Electrical Maintenance",  activity       : "Junction box replacement",  shift          : "B",  reported_on    : ISODate("2026-08-21T14:32:00Z"),  reported_by    : ObjectId,                // -> Users  source         : "OSHA_INCIDENT",         // provenance for audit  ingested_at    : ISODate(...)}
+[TABLE END]
+
+AIAnalysis (D3)
+[TABLE START]
+{  _id             : ObjectId,  incident_id     : ObjectId,               // -> Incidents  sif_probability : 0.96,  risk_band       : "CRITICAL",             // LOW | MEDIUM | HIGH | CRITICAL  confidence      : 0.91,  lsr_tags        : [ { rule: "ENERGY_ISOLATION",   score: 0.97 },                      { rule: "BYPASSING_CONTROLS", score: 0.64 },                      { rule: "LINE_OF_FIRE",       score: 0.41 } ],  entities        : { hazard    : ["Stored energy", "Live circuit"],                      equipment : ["Junction box", "415V cable"],                      activity  : ["Maintenance"],                      condition : ["Isolation not verified"] },  barrier_failure : "Physical lock-out not verified before work start",  root_cause      : "PROCEDURE_VIOLATION",  explanation     : { summary : "Unexpected energy release with no verified ...",                      tokens  : [ { term: "energized cable", weight: 0.92 },                                  { term: "no lock verified", weight: 0.78 } ] },  fatality_twin   : { chain      : ["Contact", "Arc flash", "Burns >40% TBSA",                                    "Fall from platform", "Fatality"],                      likelihood : 0.96,                      matched    : 14,                      similarity : 0.93 },  model_version   : "sif-clf-v1.3",         // every score is reproducible  analysed_at     : ISODate(...)}
+[TABLE END]
+
+9.3  Indexing Strategy
+[TABLE START]
+Collection | Index | Purpose
+Incidents | { site: 1, reported_on: -1 } | Site drill-down and timeline queries
+Incidents | { area: 1, activity: 1 } | Area and activity risk aggregation
+Incidents | text index on narrative | Keyword fallback for the search bar
+AIAnalysis | { risk_band: 1, analysed_at: -1 } | High/critical filtering on the executive dashboard
+AIAnalysis | { "lsr_tags.rule": 1 } | Life Saving Rule analytics
+Embeddings | vector index (cosine, 384 dims) | Semantic similarity and RAG retrieval
+DashboardCache | { metric_key: 1 }, TTL on computed_at | Sub-400 ms dashboard reads with automatic staleness eviction
+[TABLE END]
+
+Atlas Vector Search index definition
+[TABLE START]
+{  "fields": [    { "type": "vector", "path": "vector",      "numDimensions": 384, "similarity": "cosine" },    { "type": "filter", "path": "source_type" },   // INCIDENT | FATALITY    { "type": "filter", "path": "site" },    { "type": "filter", "path": "area" }  ]}
+[TABLE END]
+
+Filtered vector search is what allows a query such as “show me confined-space hazards at Refinery Block B” to combine semantic meaning with hard metadata constraints in a single database round-trip.
+10.  AI Intelligence Engine
+This section specifies the models themselves. It exists because the engine is the product — a judge should be able to read this section alone and know exactly what is being claimed and how it is being measured.
+10.1  Model Inventory
+[TABLE START]
+Component | Approach | Input → Output | Evaluation Metric
+SIF Classifier | DistilBERT fine-tuned, blended with XGBoost over structured features; probability calibrated with isotonic regression | Narrative + metadata → P(SIF) ∈ [0,1] | Recall on SIF class, ROC-AUC, Brier score for calibration
+LSR Mapper | Multi-label DistilBERT head over nine rule classes with per-label thresholds | Narrative → set of (rule, confidence) | Micro-F1 and per-rule precision/recall
+Hazard & Activity NER | spaCy pipeline augmented with a curated safety gazetteer and LLM back-fill for unseen phrasing | Narrative → typed entity spans | Entity-level F1 against a hand-annotated sample
+Risk Band Fusion | Deterministic rule layer combining SIF probability, LSR severity weight and barrier-failure presence | Scores → LOW/MEDIUM/HIGH/CRITICAL | Confusion matrix against domain-reviewed labels
+Explainability | SHAP token attribution, summarised into plain language by an LLM constrained to the attributed tokens | Model internals → human explanation | Faithfulness check: does removing top tokens flip the prediction?
+Semantic Retriever | all-MiniLM-L6-v2 embeddings over Atlas Vector Search with metadata pre-filtering | Query → top-k similar reports | Precision@10 under domain review
+Fatality Twin | Retrieval of nearest fatal cases, then escalation-chain synthesis constrained to observed outcome sequences | Near miss → projected escalation path | Plausibility review; every chain node must trace to a real case
+Forecaster | Prophet per hazard category with weekly seasonality and changepoint detection | Historical counts → 7-day projection | MAPE on a held-out trailing window
+[TABLE END]
+
+10.2  Risk Band Fusion Logic
+The four-level band is not simply a threshold on the SIF probability. Bands are produced by an explicit, auditable rule layer, because a safety classification must be explainable to a regulator, not only to a data scientist.
+[TABLE START]
+score = 0.55 * P(SIF)      + 0.25 * max(LSR_severity_weight)      + 0.10 * barrier_failure_present      + 0.10 * fatality_similarity_max CRITICAL  if score >= 0.85  OR  (P(SIF) >= 0.90 and barrier_failure_present)HIGH      if score >= 0.65MEDIUM    if score >= 0.40LOW       otherwise # Escalation override: any report matching a fatal case at >= 0.90# similarity is floored at HIGH regardless of computed score.
+[TABLE END]
+
+The escalation override matters. It encodes a domain principle directly into the system: if this has already killed someone somewhere, it does not get to be called low risk here.
+
+10.3  Retrieval-Augmented Copilot Pipeline
+Every Copilot answer is retrieval-grounded. The guardrail stage is non-optional: an answer that cannot cite at least one retrieved report ID is rejected and regenerated rather than shown to the user.
+
+Figure 7  ·  RAG pipeline for the AI Safety Copilot — retrieval, grounding, guardrail and citation.
+
+10.4  Safety Knowledge Graph
+Every analysed report contributes nodes and edges to a graph linking sites, activities, hazards, barrier failures, root causes and outcomes. Centrality analysis over this graph surfaces the barriers that fail most often across otherwise unrelated incidents — a pattern that is invisible in tabular reporting.
+
+Figure 8  ·  Safety Knowledge Graph — a single incident traced from site through to its nearest fatal precedent.
+
+11.  Functional Requirements
+11.1  Actors and Use Cases
+
+Figure 9  ·  Use case model — three primary actors and the nine core system interactions.
+11.2  Core Functional Requirements
+[TABLE START]
+ID | Requirement | Priority | Acceptance Criterion
+FR-01 | The system shall ingest incident records via bulk file import and single-report form entry | Must | A 4,847-row file imports with a per-row success/failure report
+FR-02 | The system shall compute a SIF probability and risk band for every ingested report | Must | 100% of stored reports have an associated AIAnalysis document
+FR-03 | The system shall map each report to zero or more Life Saving Rules with confidence scores | Must | Rule labels display with confidence to two decimal places
+FR-04 | The system shall extract hazard, equipment, activity and unsafe-condition entities | Must | Entities render as typed tags on the incident detail view
+FR-05 | The system shall explain every risk score with token-level attribution and a plain-language summary | Must | No risk band is displayed without an accompanying explanation panel
+FR-06 | The system shall retrieve semantically similar fatal incidents for any report | Must | Top-10 results return in under 500 ms with similarity scores
+FR-07 | The system shall generate a Fatality Twin escalation chain for near-miss reports | Must | Chain nodes trace to at least one real matched fatal case
+FR-08 | The system shall generate corrective actions, preventive actions and a toolbox talk | Must | CAPA items carry an owner-agnostic due horizon and are exportable
+FR-09 | The system shall rank sites by a composite risk index | Must | Ranking recomputes when filters change, within 400 ms
+FR-10 | The system shall provide area, activity, department and LSR analytics views | Must | Each view supports drill-down to the underlying report list
+FR-11 | The system shall render a geospatial hazard heatmap with incident density | Should | Markers cluster and expand; risk colour matches band taxonomy
+FR-12 | The system shall answer natural-language questions with cited sources | Must | Every answer includes at least one clickable report reference
+FR-13 | The system shall forecast seven-day risk trend per hazard category | Should | Forecast displays direction, magnitude and confidence interval
+FR-14 | The system shall generate a daily safety bulletin as an exportable PDF | Should | Bulletin generates in under 5 s and includes top risks and actions
+FR-15 | The system shall render an interactive Safety Knowledge Graph | Should | Nodes expand on click; paths between any two nodes are traceable
+FR-16 | The system shall support combined semantic and metadata filtering | Must | Site, department, hazard, risk band, date, activity and equipment filters compose
+[TABLE END]
+12.  Flagship AI Features
+These eight capabilities are the reason this is a safety intelligence platform rather than a reporting dashboard. Each one is fully implemented in the prototype and each one is demonstrable live.
+12.1  Fatality Twin — “What could have happened?”
+The single most under-used asset in industrial safety is the near miss, because a near miss is a fatality where one variable happened to differ. The Fatality Twin makes that counterfactual explicit. For any low-consequence report, the system retrieves the nearest fatal cases and projects the escalation chain the event was on.
+[TABLE START]
+Worked example from the demonstrationInput:  “Worker slipped on oil-contaminated grating while carrying a valve assembly at height.”Twin:   Slip → loss of grip → fall through unguarded opening → fatal head injury.Evidence: 9 matched fatal cases, mean similarity 0.91. Common barrier failure in all 9 — housekeeping and edge protection.Action:  Housekeeping audit raised as C1, edge-protection verification as P1.
+[TABLE END]
+
+12.2  AI Safety Copilot
+A conversational interface over the entire corpus. It is not a chatbot bolted onto a dashboard — it can query aggregates, retrieve individual reports, and compose both into a grounded answer. Representative queries handled in the demonstration:
+“Which site is most dangerous this month, and why?”
+“Why is report INC-2026-04821 rated critical?”
+“Generate a CAPA for the confined-space entry incidents at Refinery Block B.”
+“Summarise today's incidents for the morning HSE meeting.”
+“What barrier keeps failing across our electrical maintenance work?”
+“Compare energy-isolation violations between Rig-07 and Pipeline Sector 4.”
+
+12.3  Explainable Risk Scoring
+Every score carries its evidence. Token-level SHAP attribution identifies which phrases drove the prediction; the rule layer states which structural conditions escalated the band; and both are summarised in a sentence an officer can repeat to a crew. A safety system that cannot justify itself will not be trusted, and an untrusted system will not be used.
+12.4  Similar Fatal Incident Retrieval
+Semantic search across 14,914 fatality records. Because retrieval is embedding-based rather than keyword-based, a report describing “pressure released while opening line” correctly surfaces fatalities recorded as “stored energy release during depressurisation” — no shared vocabulary, identical physics.
+12.5  Smart Recommendations and Toolbox Talk Generation
+CAPA generation is precedent-driven: the system reads what actually prevented recurrence in similar historical cases rather than inventing generic advice. Output is structured into immediate corrective actions, systemic preventive actions, training requirements and a five-minute toolbox talk ready to be delivered at the next shift handover.
+12.6  Safety Knowledge Graph
+Relationships across site, activity, hazard, barrier failure, root cause and outcome are materialised as a navigable graph. Betweenness centrality over the barrier nodes answers a question no dashboard can: which single control, if fixed, would break the most incident pathways?
+12.7  Predictive Trend Analysis
+Per-hazard seven-day forecasting with changepoint detection. The value is not the number but the direction: knowing that hot-work risk is trending up 18% before the shutdown window begins changes how the week is planned.
+12.8  Automated Safety Bulletins
+Daily bulletins, weekly rollups and executive summaries generated as formatted PDFs. This closes the loop from detection to distribution — the intelligence reaches the people who never open a dashboard.
+13.  Dashboard Pages
+[TABLE START]
+# | Page | Primary Question It Answers | Key Components
+1 | Executive Dashboard | How safe are we right now, and where is that heading? | KPI strip, 90-day risk timeline, site ranking, LSR donut, AI executive summary, 7-day forecast
+2 | Incident Explorer | Find me the reports that matter | Semantic + keyword search, composable filters, risk-banded result list, bulk export
+3 | Incident Deep Analysis | Why is this specific report dangerous? | Risk gauge, XAI attribution, LSR mapping, entity tags, Fatality Twin, CAPA panel, Copilot side rail
+4 | Site Intelligence | Which of our sites is degrading? | Composite risk ranking, site-vs-site comparison, trend sparklines, top hazards per site
+5 | Area Intelligence | Which operational area needs intervention? | Rig / Refinery / Pipeline / Warehouse / Workshop comparison, barrier-failure breakdown
+6 | Hazard Analytics | What is hurting people and where? | Leaflet heatmap, hazard frequency vs severity matrix, unsafe act and condition leaderboards
+7 | Life Saving Rule Dashboard | Which non-negotiables are being broken? | Rule violation ranking, monthly trend, department breakdown, drill-through to reports
+8 | AI Recommendations | What should we do about it? | CAPA queue by priority, training needs, toolbox talk library, bulletin generator
+9 | AI Safety Copilot | Let me just ask | Streaming chat, cited sources, suggested prompts, one-click export of any answer
+10 | Knowledge Graph | How is all of this connected? | Cytoscape canvas, node expansion, path tracing, centrality highlighting
+[TABLE END]
+14.  User Interface and Visual Design
+14.1  Design Principles
+Risk is legible in one second. Colour, position and typographic weight all encode severity consistently, so the eye lands on the critical item before the user has finished reading the page.
+Never a number without a reason. Every score, band and ranking is one click away from its evidence.
+Calm under pressure. This tool is used after something went wrong. The interface stays quiet: generous whitespace, restrained motion, no alarm fatigue from over-use of red.
+Colour is never the only signal. Every risk colour is paired with a text label, satisfying WCAG 2.1 AA and colour-vision deficiency requirements.
+Density where experts need it. The executive view is sparse; the incident deep-analysis view is dense. The same design system serves both.
+14.2  Design System
+
+Figure 10  ·  Design system — colour tokens, typographic scale and component rules.
+14.3  Executive Dashboard
+The landing view answers the leadership question in one screen: total exposure, how much of it is severe, whether it is improving, and what to do first. The AI executive summary sits at eye level because it is the only element on the page that tells the user what to do rather than what happened.
+
+Figure 11  ·  Executive Dashboard — KPI strip, risk timeline, site ranking, LSR distribution, AI summary, activity risk and forecast.
+14.4  Incident Deep Analysis
+The report-level view is where the AI has to earn trust. The risk gauge states the verdict; the attribution panel immediately shows the evidence; the Fatality Twin makes the consequence concrete; and the CAPA panel converts all of it into work. The Copilot rail stays docked so the officer can interrogate anything on the page without losing context.
+
+Figure 12  ·  Incident Deep Analysis — SIF gauge, explainability, LSR mapping, Fatality Twin escalation chain, generated CAPA and docked Copilot.
+14.5  Interaction and Accessibility Standards
+[TABLE START]
+Aspect | Standard Applied
+Contrast | WCAG 2.1 AA minimum on all text-on-colour combinations; verified with automated audit in CI
+Keyboard | Full keyboard navigation; visible focus rings; skip-to-content link on every page
+Motion | 180 ms ease-out transitions; all animation disabled under prefers-reduced-motion
+Loading | Skeleton states, never spinners on data regions; last-known-good values shown with a staleness timestamp
+Empty states | Every list and chart has a designed empty state explaining what would appear and why it has not
+Errors | Failures name the affected component only — a Copilot outage never blanks the dashboard
+Responsive | Fluid down to 1024 px; the dashboard reflows to a single column on tablet
+[TABLE END]
+15.  API Specification
+The backend exposes a versioned REST surface with a single WebSocket channel for streaming Copilot responses. The full OpenAPI document is generated automatically by FastAPI and served at /docs.
+[TABLE START]
+Method | Endpoint | Purpose | Returns
+POST | /api/v1/incidents | Submit a single report for analysis | Incident + AIAnalysis document
+POST | /api/v1/incidents/bulk | Bulk import a dataset file | Per-row ingestion report
+GET | /api/v1/incidents | List and filter reports | Paginated incident list
+GET | /api/v1/incidents/{id} | Full analysis for one report | Incident, analysis, twin, recommendations
+GET | /api/v1/incidents/{id}/similar | Similar fatal incidents | Ranked matches with similarity scores
+POST | /api/v1/search/semantic | Meaning-based search across the corpus | Ranked reports with snippets
+GET | /api/v1/analytics/sites | Composite site risk ranking | Ranked sites with index and delta
+GET | /api/v1/analytics/areas | Area-wise risk comparison | Area aggregates
+GET | /api/v1/analytics/activities | Activity risk index | Ranked activities
+GET | /api/v1/analytics/lsr | Life Saving Rule violation analytics | Rule counts, trends, department split
+GET | /api/v1/analytics/heatmap | Geospatial incident density | GeoJSON feature collection
+GET | /api/v1/forecast | Seven-day risk projection | Per-hazard forecast series
+POST | /api/v1/recommendations/{id} | Generate CAPA and toolbox talk | Structured recommendation set
+POST | /api/v1/copilot/query | Ask the Safety Copilot | Grounded answer with cited report IDs
+WS | /ws/copilot | Streaming Copilot response channel | Token stream + citation payload
+GET | /api/v1/graph | Knowledge graph slice | Nodes and edges for the requested scope
+POST | /api/v1/bulletin | Generate a safety bulletin | PDF document
+GET | /api/v1/health | Liveness and model-readiness probe | Service and model status
+[TABLE END]
+16.  Non-Functional Requirements
+[TABLE START]
+ID | Category | Requirement | Measurable Target
+NFR-01 | Performance | Single-report end-to-end analysis latency | < 2.0 s at p95 on CPU-only hardware
+NFR-02 | Performance | Dashboard filter and drill-down response | < 400 ms at p95 from cached aggregates
+NFR-03 | Performance | Semantic retrieval over 19,761 vectors | < 500 ms for top-10 with metadata filters
+NFR-04 | Scalability | Corpus size supported without architecture change | 100,000 reports on a single MongoDB instance
+NFR-05 | Scalability | Concurrent dashboard users in the prototype | 50 concurrent sessions without degradation
+NFR-06 | Reliability | Graceful degradation of AI services | Copilot or LLM outage must not affect dashboards or scoring
+NFR-07 | Availability | Prototype uptime during evaluation window | Local Docker stack; no external dependency except LLM
+NFR-08 | Usability | Time for a new HSE officer to interpret a report view | Under 60 s without training
+NFR-09 | Accessibility | Contrast and keyboard compliance | WCAG 2.1 AA, verified in CI
+NFR-10 | Maintainability | Model replacement without API change | Model version recorded per analysis; contract-tested
+NFR-11 | Auditability | Reproducibility of any historical score | model_version + input hash stored on every analysis document
+NFR-12 | Portability | Full stack startup on a clean machine | One docker compose up, under 5 minutes
+NFR-13 | Security | Transport and access control | HTTPS only; role-based route guards; no secrets in client bundle
+NFR-14 | Data Integrity | Source records are immutable | Analysis never mutates the original incident document
+[TABLE END]
+17.  Security, Privacy and Governance
+17.1  Access Control
+A simplified four-role model is implemented: Officer, Manager, Leadership and Administrator. Roles gate both API routes and dashboard navigation. Full enterprise identity integration is out of prototype scope but the role boundary is real, not cosmetic.
+17.2  Data Protection
+All traffic over HTTPS; no credentials or API keys ever reach the client bundle.
+Worker names and personally identifying details are redacted at ingestion — the models operate on circumstance, not identity.
+LLM calls transmit narrative text only, with site and personnel identifiers stripped before the request leaves the service layer.
+Source documents are immutable; every analysis is an additive, versioned artefact.
+17.3  Responsible AI Commitments
+[TABLE START]
+Non-negotiable constraints on the AI layerThe system supports human judgement; it never replaces the safety professional's decision.No score is presented without its explanation and its confidence.Every generative answer must cite retrieved source records, or it is not shown at all.Model version and input hash are stored with every prediction so any historical decision can be reproduced and audited.The system is never used to attribute individual blame — it analyses conditions and barriers, not people.
+[TABLE END]
+18.  Testing and Validation Strategy
+[TABLE START]
+Test Layer | Scope | Tooling | Exit Criterion
+Unit | ETL transforms, risk fusion logic, schema validators | Pytest, Vitest | ≥ 80% coverage on core logic modules
+Model | Classifier and mapper metrics on held-out test split | scikit-learn, custom eval harness | All Section 3.3 targets met
+Regression | Model quality gate on every commit | GitHub Actions + pinned eval set | No metric regresses more than 2%
+Integration | API contract across all 18 endpoints | Pytest + httpx, schemathesis against OpenAPI | All contracts pass; no undocumented responses
+Retrieval | Relevance of top-10 similar fatalities | Manual domain review of 50 sampled queries | ≥ 8/10 judged relevant
+Grounding | Copilot citation enforcement | Automated check on 100 seeded questions | 100% of answers carry ≥ 1 valid citation
+Performance | Latency targets under concurrent load | Locust | NFR-01 through NFR-03 met at p95
+Accessibility | Contrast, keyboard, reduced-motion | axe-core in CI | Zero critical violations
+Demo rehearsal | Full ten-step demonstration script | Manual, timed | Completed within 8 minutes, three consecutive clean runs
+[TABLE END]
+19.  Implementation Plan
+The build is sequenced so that a demonstrable vertical slice exists from day four onward. If any single workstream slips, the demonstration still holds together — a deliberate risk-management choice rather than an optimistic schedule.
+
+Figure 13  ·  Twelve-day prototype build schedule with parallel model, service and interface workstreams.
+19.1  Workstream Ownership
+[TABLE START]
+Workstream | Deliverable | Dependency
+Data & ETL | Cleaned, labelled, split corpus in MongoDB | None — starts day 1
+Model Development | SIF classifier, LSR mapper, NER, embeddings | Depends on cleaned corpus (day 2)
+Service Layer | FastAPI endpoints, caching, aggregation jobs | Depends on model artefacts (day 5)
+Interface | Design system, ten dashboard pages, Copilot UI | Runs parallel from day 5 against mocked contracts
+Intelligence Features | Fatality Twin, RAG Copilot, knowledge graph, bulletins | Depends on retriever (day 8)
+Integration & Demo | Seeded demo corpus, rehearsed script, fallback cache | Final two days, all streams converge
+[TABLE END]
+20.  Differentiation and Evaluation Alignment
+20.1  Why This Is Not Another Dashboard
+[TABLE START]
+Capability | Conventional Safety Software | SIF Sentinel AI
+Report handling | Stores and displays records | Reads and understands narratives
+Severity | Records what happened | Predicts what could have happened
+Rule mapping | Manual, inconsistent | Automated, scored, auditable across nine rules
+Historical learning | Archived and forgotten | 14,914 fatal cases retrievable by meaning
+Explanation | None — a score is a number | Token attribution plus plain-language reasoning
+Recommendation | Generic checklists | Precedent-driven CAPA from cases that actually recurred
+Outlook | Backward-looking reports | Seven-day forward risk projection
+Access model | Trained analysts writing queries | Anyone asking a question in plain language
+Cross-incident insight | Isolated records | Knowledge graph exposing repeat barrier failures
+[TABLE END]
+
+20.2  Live Demonstration Script
+The following eight-minute sequence is the rehearsed evaluation walkthrough. Every step runs against real data and live models — there are no simulated screens.
+[TABLE START]
+# | Step | What the panel sees | Time
+1 | Executive Dashboard opens | 19,761 reports already analysed; four KPIs; risk trending up at Rig-07 | 0:45
+2 | Submit a live near-miss report | Typed narrative analysed end-to-end in under two seconds | 1:00
+3 | Risk verdict appears | 96% SIF probability, CRITICAL band, confidence shown | 0:30
+4 | Open the explanation panel | Four attributed phrases with weights and a plain-language reason | 0:45
+5 | Life Saving Rule mapping | Energy Isolation at 0.97, two secondary rules, entity tags extracted | 0:30
+6 | Fatality Twin | Escalation chain rendered; 14 matched fatal cases at 93% similarity | 1:00
+7 | Open a matched fatal case | Real OSHA fatality with the same barrier failure | 0:40
+8 | Generated CAPA and toolbox talk | Four prioritised actions plus a shift-ready talk, exported to PDF | 0:50
+9 | Ask the Copilot two questions | Grounded answers with clickable report citations | 1:10
+10 | Knowledge graph and forecast | Repeat barrier failure highlighted; hot-work risk trending up 18% | 1:00
+[TABLE END]
+
+20.3  Traceability — Objective to Demonstration
+[TABLE START]
+Objective | Requirements | Feature | Demo Step
+O1 Understand narratives | FR-04 | Hazard & Activity NER | 5
+O2 Predict severity | FR-02 | SIF Classifier + Risk Fusion | 3
+O3 Explain predictions | FR-05 | SHAP attribution panel | 4
+O4 Learn from fatalities | FR-06, FR-07 | Similar retrieval + Fatality Twin | 6, 7
+O5 Aggregate to decisions | FR-09, FR-10 | Site, area and LSR analytics | 1
+O6 Forecast risk | FR-13 | Prophet forecaster | 10
+O7 Conversational access | FR-12 | RAG Safety Copilot | 9
+O8 Close the loop | FR-08, FR-14 | CAPA, toolbox talk, bulletin | 8
+[TABLE END]
+21.  Prototype Deliverables
+The following ten capabilities constitute the completed prototype. Each is demonstrable live and each maps to a numbered step in the walkthrough above.
+AI-powered SIF prediction with calibrated probability and four-level risk banding.
+Automated Life Saving Rule classification across nine rules with confidence scores.
+Hazard, equipment, activity and unsafe-condition extraction from free text.
+Explainable risk scoring with token-level attribution and plain-language reasoning.
+Semantic retrieval of similar fatal incidents across a 14,914-record knowledge base.
+Fatality Twin escalation simulation grounded in real matched cases.
+Precedent-driven CAPA, training and toolbox talk generation.
+Site, area, activity, department and Life Saving Rule analytics with heatmaps and trends.
+Conversational AI Safety Copilot with enforced source citation.
+Executive dashboards, seven-day forecasting, knowledge graph and automated safety bulletins.
+22.  Risk Register
+[TABLE START]
+Risk | Impact | Likelihood | Mitigation
+Venue network failure disables the Copilot | High | Medium | Pre-seeded response cache for the rehearsed question set; dashboards are fully local and unaffected
+Class imbalance suppresses SIF recall | High | Medium | Weighted loss, recall-first threshold tuning, fatality-corpus augmentation (Section 5.4)
+Retrieval returns superficially similar but irrelevant cases | Medium | Medium | Metadata pre-filtering plus domain review of 50 sampled queries before freeze
+Model inference too slow on venue hardware | Medium | Low | ONNX quantised CPU inference benchmarked at build time; batch pre-computation of the seeded corpus
+LLM hallucination in generated CAPA | High | Low | Generation constrained to retrieved precedent; guardrail rejects uncited output; human approval step in the UI
+Scope creep across ten pages | Medium | High | Vertical slice complete by day 4; features 12.6 to 12.8 are the designated trim candidates
+[TABLE END]
+23.  Product Vision Beyond the Prototype
+These capabilities are deliberately excluded from the prototype. They are stated here to show the trajectory of the product, and they are clearly separated so that nothing in this roadmap is mistaken for a demonstrated capability.
+[TABLE START]
+Horizon | Capability | Value Added
+Near | PPE and unsafe-act detection from CCTV using computer vision | Observation without dependence on a human filing a report
+Near | Voice-based incident reporting in regional languages | Removes the literacy and language barrier at the field level
+Near | Offline-capable mobile app for field engineers | Reporting at the point of observation, syncing when connectivity returns
+Near | Contractor safety scorecards | Extends accountability to the workforce segment with the highest exposure
+Mid | Live IoT integration — gas, pressure, vibration, wearables | Moves detection from reported to sensed
+Mid | AI-powered permit-to-work validation | Blocks a high-risk job before it is authorised rather than after it fails
+Mid | Weather-aware safety alerting (heat, lightning, rainfall) | Environmental risk folded into daily planning
+Mid | Shift-wise fatigue and risk analytics | Human factors added to the risk model
+Long | Digital twin of plant operations | Simulate the safety consequence of an operational change before making it
+Long | Drone-based inspection analytics | Coverage of assets people cannot safely reach
+Long | Automatic SOP generation from recurring incidents | The system writes the procedure that would have prevented the pattern
+Long | Site safety maturity index and gamified department leaderboards | Sustained cultural engagement, not just compliance
+[TABLE END]
+24.  Conclusion
+SIF Sentinel AI is built on a narrow, defensible thesis: fatalities are preceded by near misses that carried the same conditions and were read as routine. The prototype demonstrates that those conditions are extractable from free text, scorable, explainable, and comparable against a corpus of outcomes that already happened.
+The architectural choices reflect that focus. A single database rather than four. Deterministic classifiers where a score must be defensible, retrieval-grounded generation where language is required, and an explicit rule layer where domain knowledge must be encoded rather than learned. Nothing in the stack exists to make the diagram look impressive.
+What the prototype delivers is a complete reasoning path from an unstructured sentence typed by a field officer to a prioritised action assigned to a shift — with the evidence for every step visible on screen. That path is the product. Everything in Section 23 is an extension of it.
+
+[TABLE START]
+The one-line summarySIF Sentinel AI reads every safety report the way an expert investigator would, at machine speed, and raises the ones carrying fatal potential while the outcome can still be changed.
+[TABLE END]
+
+SIF Sentinel AI  ·  Team The Last Commit  ·  Smart India Hackathon 2026

@@ -1,0 +1,15 @@
+{
+  "threshold": 0.05,
+  "test_recall_sif_positive": 0.9878213802435724,
+  "test_precision_sif_positive": 0.8891595615103532,
+  "test_f1": 0.9358974358974359,
+  "test_roc_auc": 0.9693355656980344,
+  "test_brier_score": 0.05224985209995742,
+  "n_train": 3241,
+  "n_val": 538,
+  "n_test": 1034,
+  "success_criteria": {
+    "SC-1_recall_target": 0.9,
+    "SC-1_roc_auc_target": 0.88
+  }
+}
