@@ -1,7 +1,7 @@
 {
-  "incidents_total": 4813,
-  "incidents_sif_positive": 3501,
-  "incidents_sif_positive_rate": 0.7274049449407853,
+  "incidents_total": 4811,
+  "incidents_sif_positive": 3499,
+  "incidents_sif_positive_rate": 0.7272916233631261,
   "fatalities_total": 11436,
-  "combined_vector_corpus_size": 16249
+  "combined_vector_corpus_size": 16247
 }

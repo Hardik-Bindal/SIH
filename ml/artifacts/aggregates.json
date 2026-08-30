@@ -2,117 +2,117 @@
   "sites": [
     {
       "site": "Refinery Block B",
-      "report_count": 493,
-      "avg_sif_probability": 0.7479505071,
-      "critical_count": 7,
-      "high_count": 329,
-      "composite_risk_index": 2.4705882353
-    },
-    {
-      "site": "Refinery Block A",
-      "report_count": 538,
-      "avg_sif_probability": 0.7360659851,
-      "critical_count": 9,
-      "high_count": 349,
-      "composite_risk_index": 2.4609665428
+      "report_count": 492,
+      "avg_sif_probability": 0.7481792683,
+      "critical_count": 8,
+      "high_count": 328,
+      "composite_risk_index": 2.4756097561
     },
     {
       "site": "Rig-07 Duliajan",
       "report_count": 490,
-      "avg_sif_probability": 0.7170477551,
-      "critical_count": 15,
-      "high_count": 317,
-      "composite_risk_index": 2.4571428571
+      "avg_sif_probability": 0.7177802041,
+      "critical_count": 14,
+      "high_count": 320,
+      "composite_risk_index": 2.4591836735
     },
     {
-      "site": "Pipeline Sector 9",
-      "report_count": 560,
-      "avg_sif_probability": 0.7323860714,
-      "critical_count": 11,
-      "high_count": 364,
-      "composite_risk_index": 2.45
-    },
-    {
-      "site": "Central Warehouse",
-      "report_count": 615,
-      "avg_sif_probability": 0.7261811382,
-      "critical_count": 15,
-      "high_count": 388,
-      "composite_risk_index": 2.443902439
+      "site": "Refinery Block A",
+      "report_count": 538,
+      "avg_sif_probability": 0.7360587361,
+      "critical_count": 10,
+      "high_count": 348,
+      "composite_risk_index": 2.4572490706
     },
     {
       "site": "Pipeline Sector 4",
       "report_count": 539,
-      "avg_sif_probability": 0.7254801484,
+      "avg_sif_probability": 0.7263842301,
       "critical_count": 9,
-      "high_count": 346,
-      "composite_risk_index": 2.439703154
+      "high_count": 347,
+      "composite_risk_index": 2.4434137291
+    },
+    {
+      "site": "Pipeline Sector 9",
+      "report_count": 560,
+      "avg_sif_probability": 0.7332428571,
+      "critical_count": 11,
+      "high_count": 360,
+      "composite_risk_index": 2.4428571429
+    },
+    {
+      "site": "Central Warehouse",
+      "report_count": 615,
+      "avg_sif_probability": 0.7275095935,
+      "critical_count": 15,
+      "high_count": 386,
+      "composite_risk_index": 2.4390243902
     },
     {
       "site": "Rig-12 Moran",
-      "report_count": 553,
-      "avg_sif_probability": 0.7038560579,
+      "report_count": 552,
+      "avg_sif_probability": 0.7042509058,
       "critical_count": 5,
-      "high_count": 349,
-      "composite_risk_index": 2.390596745
+      "high_count": 344,
+      "composite_risk_index": 2.3822463768
     },
     {
       "site": "Field Workshop Duliajan",
       "report_count": 495,
-      "avg_sif_probability": 0.7156915152,
+      "avg_sif_probability": 0.7148470707,
       "critical_count": 7,
-      "high_count": 302,
-      "composite_risk_index": 2.3898989899
+      "high_count": 301,
+      "composite_risk_index": 2.3818181818
     },
     {
       "site": "Rig-03 Kumchai",
       "report_count": 530,
-      "avg_sif_probability": 0.7054243396,
+      "avg_sif_probability": 0.7058516981,
       "critical_count": 9,
-      "high_count": 327,
-      "composite_risk_index": 2.3830188679
+      "high_count": 326,
+      "composite_risk_index": 2.3811320755
     }
   ],
   "areas": [
     {
       "area": "REFINERY",
-      "report_count": 1031,
-      "avg_sif_probability": 0.7417488846,
-      "critical_count": 16,
-      "high_count": 678,
-      "composite_risk_index": 2.4655674103
+      "report_count": 1030,
+      "avg_sif_probability": 0.7418483495,
+      "critical_count": 18,
+      "high_count": 676,
+      "composite_risk_index": 2.4660194175
     },
     {
       "area": "PIPELINE",
       "report_count": 1099,
-      "avg_sif_probability": 0.7289990901,
+      "avg_sif_probability": 0.7298790719,
       "critical_count": 20,
-      "high_count": 710,
-      "composite_risk_index": 2.4449499545
+      "high_count": 707,
+      "composite_risk_index": 2.4431301183
     },
     {
       "area": "WAREHOUSE",
       "report_count": 615,
-      "avg_sif_probability": 0.7261811382,
+      "avg_sif_probability": 0.7275095935,
       "critical_count": 15,
-      "high_count": 388,
-      "composite_risk_index": 2.443902439
+      "high_count": 386,
+      "composite_risk_index": 2.4390243902
     },
     {
       "area": "RIG",
-      "report_count": 1573,
-      "avg_sif_probability": 0.7084937699,
-      "critical_count": 29,
-      "high_count": 993,
-      "composite_risk_index": 2.4087730451
+      "report_count": 1572,
+      "avg_sif_probability": 0.7090077608,
+      "critical_count": 28,
+      "high_count": 990,
+      "composite_risk_index": 2.4058524173
     },
     {
       "area": "WORKSHOP",
       "report_count": 495,
-      "avg_sif_probability": 0.7156915152,
+      "avg_sif_probability": 0.7148470707,
       "critical_count": 7,
-      "high_count": 302,
-      "composite_risk_index": 2.3898989899
+      "high_count": 301,
+      "composite_risk_index": 2.3818181818
     }
   ],
   "activities": [
@@ -127,23 +127,23 @@
     {
       "activity": "Crane Lift",
       "report_count": 1,
-      "avg_sif_probability": 0.9828,
+      "avg_sif_probability": 0.9811,
       "critical_count": 0,
       "high_count": 1,
       "composite_risk_index": 3.0
     },
     {
-      "activity": "Pipe Fitting",
+      "activity": "Trenching",
       "report_count": 2,
-      "avg_sif_probability": 0.98735,
+      "avg_sif_probability": 0.98165,
       "critical_count": 0,
       "high_count": 2,
       "composite_risk_index": 3.0
     },
     {
-      "activity": "Trenching",
+      "activity": "Pipe Fitting",
       "report_count": 2,
-      "avg_sif_probability": 0.98735,
+      "avg_sif_probability": 0.9889,
       "critical_count": 0,
       "high_count": 2,
       "composite_risk_index": 3.0
@@ -151,15 +151,15 @@
     {
       "activity": "Housekeeping",
       "report_count": 5,
-      "avg_sif_probability": 0.76758,
+      "avg_sif_probability": 0.8426,
       "critical_count": 0,
       "high_count": 4,
-      "composite_risk_index": 2.6
+      "composite_risk_index": 2.8
     },
     {
       "activity": "Material Handling",
       "report_count": 5,
-      "avg_sif_probability": 0.76996,
+      "avg_sif_probability": 0.771,
       "critical_count": 0,
       "high_count": 4,
       "composite_risk_index": 2.6
@@ -167,7 +167,7 @@
     {
       "activity": "Excavation",
       "report_count": 48,
-      "avg_sif_probability": 0.7728354167,
+      "avg_sif_probability": 0.778875,
       "critical_count": 0,
       "high_count": 35,
       "composite_risk_index": 2.5625
@@ -175,31 +175,31 @@
     {
       "activity": "Cutting",
       "report_count": 217,
-      "avg_sif_probability": 0.7555926267,
+      "avg_sif_probability": 0.7567179724,
       "critical_count": 2,
       "high_count": 153,
-      "composite_risk_index": 2.5253456221
+      "composite_risk_index": 2.5207373272
     },
     {
       "activity": "Welding",
       "report_count": 34,
-      "avg_sif_probability": 0.7013558824,
+      "avg_sif_probability": 0.7007647059,
       "critical_count": 1,
       "high_count": 21,
       "composite_risk_index": 2.4411764706
     },
     {
       "activity": "General Duties",
-      "report_count": 4330,
-      "avg_sif_probability": 0.7236929099,
-      "critical_count": 78,
-      "high_count": 2752,
-      "composite_risk_index": 2.4286374134
+      "report_count": 4328,
+      "avg_sif_probability": 0.724007463,
+      "critical_count": 79,
+      "high_count": 2741,
+      "composite_risk_index": 2.4256007394
     },
     {
       "activity": "Painting",
       "report_count": 33,
-      "avg_sif_probability": 0.7245818182,
+      "avg_sif_probability": 0.7259666667,
       "critical_count": 1,
       "high_count": 20,
       "composite_risk_index": 2.4242424242
@@ -207,7 +207,7 @@
     {
       "activity": "Roofing",
       "report_count": 79,
-      "avg_sif_probability": 0.6411278481,
+      "avg_sif_probability": 0.6414113924,
       "critical_count": 5,
       "high_count": 44,
       "composite_risk_index": 2.3544303797
@@ -215,7 +215,7 @@
     {
       "activity": "Demolition",
       "report_count": 21,
-      "avg_sif_probability": 0.6679714286,
+      "avg_sif_probability": 0.6658666667,
       "critical_count": 0,
       "high_count": 14,
       "composite_risk_index": 2.3333333333
@@ -223,7 +223,7 @@
     {
       "activity": "Drilling",
       "report_count": 21,
-      "avg_sif_probability": 0.6586380952,
+      "avg_sif_probability": 0.6591857143,
       "critical_count": 0,
       "high_count": 12,
       "composite_risk_index": 2.2857142857
@@ -231,7 +231,7 @@
     {
       "activity": "Grinding",
       "report_count": 14,
-      "avg_sif_probability": 0.4791,
+      "avg_sif_probability": 0.4785714286,
       "critical_count": 0,
       "high_count": 6,
       "composite_risk_index": 1.9285714286
@@ -241,90 +241,90 @@
     {
       "department": "Electrical Maintenance",
       "report_count": 609,
-      "avg_sif_probability": 0.7928323481,
-      "critical_count": 28,
-      "high_count": 406,
-      "composite_risk_index": 2.5927750411
+      "avg_sif_probability": 0.793747619,
+      "critical_count": 29,
+      "high_count": 404,
+      "composite_risk_index": 2.5911330049
     },
     {
       "department": "Logistics & Materials",
       "report_count": 1341,
-      "avg_sif_probability": 0.7796702461,
-      "critical_count": 17,
-      "high_count": 961,
+      "avg_sif_probability": 0.7796821029,
+      "critical_count": 18,
+      "high_count": 960,
       "composite_risk_index": 2.5443698732
     },
     {
       "department": "Civil & Structural",
-      "report_count": 915,
-      "avg_sif_probability": 0.7383291803,
+      "report_count": 914,
+      "avg_sif_probability": 0.738780744,
       "critical_count": 21,
-      "high_count": 619,
-      "composite_risk_index": 2.487431694
+      "high_count": 617,
+      "composite_risk_index": 2.4846827133
     },
     {
       "department": "HSE",
       "report_count": 198,
-      "avg_sif_probability": 0.7713388889,
+      "avg_sif_probability": 0.7729131313,
       "critical_count": 1,
-      "high_count": 124,
-      "composite_risk_index": 2.4343434343
+      "high_count": 126,
+      "composite_risk_index": 2.4444444444
     },
     {
       "department": "Process Operations",
       "report_count": 462,
-      "avg_sif_probability": 0.7111396104,
-      "critical_count": 5,
-      "high_count": 286,
-      "composite_risk_index": 2.3787878788
+      "avg_sif_probability": 0.7105982684,
+      "critical_count": 4,
+      "high_count": 284,
+      "composite_risk_index": 2.367965368
     },
     {
       "department": "Mechanical Maintenance",
       "report_count": 296,
-      "avg_sif_probability": 0.6689942568,
+      "avg_sif_probability": 0.6703077703,
       "critical_count": 5,
-      "high_count": 156,
-      "composite_risk_index": 2.2736486486
+      "high_count": 155,
+      "composite_risk_index": 2.2702702703
     },
     {
       "department": "Drilling Operations",
-      "report_count": 992,
-      "avg_sif_probability": 0.6028273185,
+      "report_count": 991,
+      "avg_sif_probability": 0.6035649849,
       "critical_count": 10,
-      "high_count": 519,
-      "composite_risk_index": 2.2006048387
+      "high_count": 514,
+      "composite_risk_index": 2.194752775
     }
   ],
   "lsr_rules": [
     {
       "rule": "LINE_OF_FIRE",
-      "count": 3447,
+      "count": 3445,
       "avg_score": 0.655
     },
     {
       "rule": "BYPASSING_CONTROLS",
-      "count": 3222,
+      "count": 3224,
       "avg_score": 0.386
     },
     {
       "rule": "WORK_AT_HEIGHT",
       "count": 2599,
-      "avg_score": 0.577
+      "avg_score": 0.576
     },
     {
       "rule": "WORK_AUTHORISATION",
-      "count": 1869,
-      "avg_score": 0.311
+      "count": 1879,
+      "avg_score": 0.309
     },
     {
       "rule": "SAFE_MECHANICAL_LIFTING",
-      "count": 1501,
-      "avg_score": 0.427
+      "count": 1495,
+      "avg_score": 0.428
     },
     {
       "rule": "ENERGY_ISOLATION",
-      "count": 1191,
-      "avg_score": 0.446
+      "count": 1203,
+      "avg_score": 0.443
     },
     {
       "rule": "DRIVING_SAFETY",
@@ -343,15 +343,15 @@
     }
   ],
   "risk_band_distribution": {
-    "HIGH": 3071,
-    "LOW": 1167,
-    "MEDIUM": 488,
-    "CRITICAL": 87
+    "HIGH": 3060,
+    "LOW": 1172,
+    "MEDIUM": 491,
+    "CRITICAL": 88
   },
   "kpis": {
-    "total_reports": 4813,
+    "total_reports": 4811,
     "critical_pct": 1.8,
-    "high_or_above_pct": 65.6,
-    "avg_sif_probability": 0.723
+    "high_or_above_pct": 65.4,
+    "avg_sif_probability": 0.724
   }
 }

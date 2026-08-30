@@ -7,6 +7,7 @@ const Landing = lazy(() => import('./pages/Landing'))
 const ExecutiveDashboard = lazy(() => import('./pages/ExecutiveDashboard'))
 const IncidentExplorer = lazy(() => import('./pages/IncidentExplorer'))
 const IncidentDetail = lazy(() => import('./pages/IncidentDetail'))
+const ReportIncident = lazy(() => import('./pages/ReportIncident'))
 const SafetyMemory = lazy(() => import('./pages/SafetyMemory'))
 const SiteIntelligence = lazy(() => import('./pages/SiteIntelligence'))
 const AreaIntelligence = lazy(() => import('./pages/AreaIntelligence'))
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="/dashboard" element={<ExecutiveDashboard />} />
           <Route path="/incidents" element={<IncidentExplorer />} />
           <Route path="/incidents/:id" element={<IncidentDetail />} />
+          <Route path="/report" element={<ReportIncident />} />
           <Route path="/memory" element={<SafetyMemory />} />
           <Route path="/sites" element={<SiteIntelligence />} />
           <Route path="/areas" element={<AreaIntelligence />} />

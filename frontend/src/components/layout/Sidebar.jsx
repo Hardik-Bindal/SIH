@@ -2,6 +2,7 @@ import { NavLink, Link } from 'react-router-dom'
 import {
   LayoutDashboard,
   Search,
+  FileText,
   BrainCircuit,
   Factory,
   Map as MapIcon,
@@ -18,6 +19,7 @@ import {
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Executive Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/report', label: 'Report Incident', icon: FileText },
   { to: '/incidents', label: 'Incident Explorer', icon: Search },
   { to: '/memory', label: 'Safety Memory', icon: BrainCircuit },
   { to: '/sites', label: 'Site Intelligence', icon: Factory },
