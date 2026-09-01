@@ -1,302 +1,569 @@
 /**
  * generateIncidentPdf.js
  *
- * Generates a fully formatted PDF for an incident analysis report using jsPDF.
- * Pure client-side — no server required.
+ * Dark-themed, comprehensive incident analysis PDF for Kavach AI.
+ * Matches the deep-blue dark UI. Pure client-side — no server required.
  */
 import { jsPDF } from 'jspdf'
 
-// ── helpers ──────────────────────────────────────────────────────────────────
+// ── Design Tokens (Dark UI Palette) ─────────────────────────────────────────
+const BG_PAGE    = [13,  17,  35]   // deepest page bg  #0D1123
+const BG_CARD    = [20,  27,  56]   // card surface     #141B38
+const BG_CARD2   = [26,  35,  71]   // card surface 2   #1A2347
+const BORDER     = [45,  58,  100]  // subtle border    #2D3A64
+const BRAND      = [99,  155, 255]  // brand-400        #639BFF
+const BRAND_DIM  = [59,  100, 200]  // brand-600        #3B64C8
 
-const BRAND = [59, 130, 246]   // blue-500
-const CRITICAL = [220, 38, 38] // red-600
-const HIGH = [234, 88, 12]     // orange-600
-const MEDIUM = [202, 138, 4]   // yellow-600
-const LOW = [22, 163, 74]      // green-600
-const GRAY = [107, 114, 128]
-const DARK = [17, 24, 39]
-const LIGHT_BG = [248, 250, 252]
-const BORDER = [226, 232, 240]
+const CRITICAL   = [239, 68,  68]   // red-500
+const HIGH       = [249, 115, 22]   // orange-500
+const MEDIUM     = [234, 179, 8]    // yellow-500
+const LOW        = [34,  197, 94]   // green-500
+
+const TEXT_1     = [226, 232, 240]  // slate-200  (primary text)
+const TEXT_2     = [148, 163, 184]  // slate-400  (secondary)
+const TEXT_3     = [100, 116, 139]  // slate-500  (muted)
+const WHITE      = [255, 255, 255]
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function bandColor(band) {
-  if (!band) return GRAY
+  if (!band) return TEXT_3
   switch (band.toUpperCase()) {
     case 'CRITICAL': return CRITICAL
     case 'HIGH':     return HIGH
     case 'MEDIUM':   return MEDIUM
     case 'LOW':      return LOW
-    default:         return GRAY
+    default:         return TEXT_3
   }
 }
 
 function fmt(val, fallback = '—') {
-  return val || fallback
+  if (val == null || val === '') return fallback
+  return String(val)
 }
 
-function pct(val) {
-  if (val == null) return '—'
+function pct(val, fallback = '—') {
+  if (val == null) return fallback
   return `${(val * 100).toFixed(1)}%`
-}
-
-function wrapText(doc, text, x, y, maxWidth, lineHeight = 5) {
-  const lines = doc.splitTextToSize(text || '—', maxWidth)
-  doc.text(lines, x, y)
-  return y + lines.length * lineHeight
-}
-
-// ── section helpers ───────────────────────────────────────────────────────────
-
-function drawHR(doc, y, color = BORDER) {
-  doc.setDrawColor(...color)
-  doc.setLineWidth(0.3)
-  doc.line(14, y, 196, y)
-  return y + 4
-}
-
-function sectionHeader(doc, title, y) {
-  doc.setFillColor(...BRAND)
-  doc.roundedRect(14, y, 182, 7, 1.5, 1.5, 'F')
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(8)
-  doc.setTextColor(255, 255, 255)
-  doc.text(title.toUpperCase(), 18, y + 4.8)
-  return y + 11
-}
-
-function keyVal(doc, key, value, x, y, keyWidth = 45) {
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(7.5)
-  doc.setTextColor(...GRAY)
-  doc.text(key, x, y)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(...DARK)
-  const lines = doc.splitTextToSize(String(value || '—'), 130 - keyWidth)
-  doc.text(lines, x + keyWidth, y)
-  return y + lines.length * 4.5
-}
-
-function pill(doc, text, x, y, bgColor, textColor = [255, 255, 255]) {
-  const textW = doc.getTextWidth(text) + 4
-  doc.setFillColor(...bgColor)
-  doc.roundedRect(x, y - 3.2, textW, 5, 1, 1, 'F')
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(7)
-  doc.setTextColor(...textColor)
-  doc.text(text, x + 2, y)
-  return x + textW + 2
 }
 
 function checkPageBreak(doc, y, needed = 20) {
   if (y + needed > 278) {
     doc.addPage()
+    // Re-fill dark background on new page
+    doc.setFillColor(...BG_PAGE)
+    doc.rect(0, 0, 210, 297, 'F')
     return 16
   }
   return y
 }
 
-// ── main export ───────────────────────────────────────────────────────────────
+/** Filled rounded rectangle helper */
+function fillRounded(doc, x, y, w, h, r, color) {
+  doc.setFillColor(...color)
+  doc.roundedRect(x, y, w, h, r, r, 'F')
+}
+
+/** Dark card background */
+function card(doc, x, y, w, h, color = BG_CARD) {
+  fillRounded(doc, x, y, w, h, 2, color)
+  doc.setDrawColor(...BORDER)
+  doc.setLineWidth(0.25)
+  doc.roundedRect(x, y, w, h, 2, 2, 'S')
+}
+
+/** Section header bar */
+function sectionHeader(doc, title, y) {
+  const margin = 14
+  const innerW = 182
+  fillRounded(doc, margin, y, innerW, 8, 1.5, BG_CARD2)
+  // Left accent bar
+  doc.setFillColor(...BRAND)
+  doc.rect(margin, y, 3, 8, 'F')
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(7.5)
+  doc.setTextColor(...BRAND)
+  doc.text(title.toUpperCase(), margin + 6, y + 5.3)
+  return y + 13
+}
+
+/** Key → Value row */
+function keyVal(doc, key, value, x, y, keyWidth = 52) {
+  const maxW = 182 - keyWidth - (x - 14)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(7.5)
+  doc.setTextColor(...TEXT_3)
+  doc.text(key, x, y)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...TEXT_1)
+  const lines = doc.splitTextToSize(fmt(value), maxW)
+  doc.text(lines, x + keyWidth, y)
+  return y + lines.length * 4.8 + 1
+}
+
+/** Coloured pill / chip */
+function pill(doc, text, x, y, bgColor, textColor = WHITE) {
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(6.5)
+  const tw = doc.getTextWidth(text)
+  const pw = tw + 5
+  fillRounded(doc, x, y - 3.5, pw, 5.5, 1.2, bgColor)
+  doc.setTextColor(...textColor)
+  doc.text(text, x + 2.5, y)
+  return x + pw + 2.5
+}
+
+/** Horizontal rule */
+function hr(doc, y) {
+  doc.setDrawColor(...BORDER)
+  doc.setLineWidth(0.2)
+  doc.line(14, y, 196, y)
+  return y + 4
+}
+
+// ── Page setup helpers ────────────────────────────────────────────────────────
+
+function fillPageBg(doc) {
+  doc.setFillColor(...BG_PAGE)
+  doc.rect(0, 0, 210, 297, 'F')
+}
+
+// ── Main export ───────────────────────────────────────────────────────────────
 
 export function generateIncidentPdf(analysis) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-  const pageW = 210
   const margin = 14
-  const innerW = pageW - margin * 2
-
-  // ── COVER HEADER ─────────────────────────────────────────────────────────
-  doc.setFillColor(...BRAND)
-  doc.rect(0, 0, 210, 30, 'F')
-
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(16)
-  doc.setTextColor(255, 255, 255)
-  doc.text('SIF Sentinel AI', margin, 12)
-
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8.5)
-  doc.setTextColor(200, 220, 255)
-  doc.text('Incident Analysis Report', margin, 18)
-
-  // Report ID badge top-right
+  const innerW = 182   // 210 - 14*2
   const rId = analysis.report_id || 'UNKNOWN'
+
+  // ── PAGE 1 BACKGROUND ────────────────────────────────────────────────────
+  fillPageBg(doc)
+
+  // ── HEADER BANNER ────────────────────────────────────────────────────────
+  // Gradient-like dark banner
+  doc.setFillColor(...BRAND_DIM)
+  doc.rect(0, 0, 210, 36, 'F')
+  doc.setFillColor(13, 22, 60, 0.7)
+  doc.rect(0, 0, 210, 36, 'F')
+
+  // Shield icon (simple polygon via lines)
+  doc.setFillColor(...BRAND)
+  doc.circle(margin + 5, 12, 4, 'F')
   doc.setFont('helvetica', 'bold')
+  doc.setFontSize(9)
+  doc.setTextColor(...BG_PAGE)
+  doc.text('K', margin + 3, 13.5)
+
+  // Title
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(17)
+  doc.setTextColor(...WHITE)
+  doc.text('Kavach AI', margin + 12, 13)
+
+  doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
-  const idW = doc.getTextWidth(rId) + 6
-  doc.setFillColor(255, 255, 255)
-  doc.roundedRect(210 - margin - idW, 10, idW, 8, 2, 2, 'F')
   doc.setTextColor(...BRAND)
-  doc.text(rId, 210 - margin - idW + 3, 15.5)
+  doc.text('Incident Analysis Report', margin + 12, 20)
 
-  // Timestamp
-  doc.setFont('helvetica', 'normal')
+  // Subtitle tag
+  doc.setFontSize(6.5)
+  doc.setTextColor(...TEXT_3)
+  doc.text('Knowledge-driven AI for Vigilance and Critical Hazard Prevention', margin + 12, 26)
+
+  // Report ID badge (top-right)
+  const badgeW = doc.getTextWidth(rId) + 8
+  fillRounded(doc, 210 - margin - badgeW, 8, badgeW, 8, 2, BG_CARD)
+  doc.setDrawColor(...BRAND)
+  doc.setLineWidth(0.4)
+  doc.roundedRect(210 - margin - badgeW, 8, badgeW, 8, 2, 2, 'S')
+  doc.setFont('helvetica', 'bold')
   doc.setFontSize(7)
-  doc.setTextColor(180, 210, 255)
+  doc.setTextColor(...BRAND)
+  doc.text(rId, 210 - margin - badgeW + 4, 13.5)
+
+  // Timestamp (bottom-right of banner)
   const now = new Date().toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'short' })
-  doc.text(`Generated: ${now}`, margin, 26)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(6.5)
+  doc.setTextColor(...TEXT_3)
+  doc.text(`Generated: ${now}`, 196, 32, { align: 'right' })
 
-  let y = 38
+  let y = 44
 
-  // ── RISK SUMMARY BAND ─────────────────────────────────────────────────────
+  // ── RISK SUMMARY CARD ────────────────────────────────────────────────────
   const bColor = bandColor(analysis.risk_band)
+  // Outer glow
+  doc.setDrawColor(...bColor)
+  doc.setLineWidth(0.5)
+  doc.roundedRect(margin, y, innerW, 26, 3, 3, 'S')
+  // Card fill
+  fillRounded(doc, margin, y, innerW, 26, 3, BG_CARD)
+
+  // Left: Risk band big text
+  const bandText = analysis.risk_band || 'UNSCORED'
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(22)
+  doc.setTextColor(...bColor)
+  doc.text(bandText, margin + 5, y + 15)
+
+  // Risk band bar under text
   doc.setFillColor(...bColor)
-  doc.roundedRect(margin, y, innerW, 18, 2, 2, 'F')
+  const bandW = doc.getTextWidth(bandText)
+  doc.rect(margin + 5, y + 17, bandW, 1.2, 'F')
+
+  // Middle column
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(7)
+  doc.setTextColor(...TEXT_3)
+  doc.text('SIF PROBABILITY', margin + 68, y + 9)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(14)
+  doc.setTextColor(...TEXT_1)
+  doc.text(pct(analysis.sif_probability), margin + 68, y + 18)
 
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(20)
-  doc.setTextColor(255, 255, 255)
-  doc.text(analysis.risk_band || 'UNSCORED', margin + 5, y + 12)
-
+  doc.setFontSize(7)
+  doc.setTextColor(...TEXT_3)
+  doc.text('CONFIDENCE', margin + 68, y + 24)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
-  doc.setTextColor(255, 255, 255)
-  doc.text(`SIF Probability: ${pct(analysis.sif_probability)}`, margin + 60, y + 7)
-  doc.text(`Confidence: ${pct(analysis.confidence)}`, margin + 60, y + 12)
-  doc.text(`Barrier Failure: ${analysis.barrier_failure ? 'YES ⚠' : 'No'}`, margin + 110, y + 7)
-  doc.text(`Root Cause: ${fmt(analysis.root_cause?.replaceAll('_', ' '))}`, margin + 110, y + 12)
+  doc.setTextColor(...TEXT_2)
+  doc.text(pct(analysis.confidence), margin + 68 + 22, y + 24)
 
-  y += 23
+  // Vertical divider
+  doc.setDrawColor(...BORDER)
+  doc.setLineWidth(0.25)
+  doc.line(margin + 115, y + 4, margin + 115, y + 22)
+
+  // Right column
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(7)
+  doc.setTextColor(...TEXT_3)
+  doc.text('BARRIER FAILURE', margin + 119, y + 9)
+  const bf = analysis.barrier_failure
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(9)
+  doc.setTextColor(...(bf ? CRITICAL : LOW))
+  doc.text(bf ? 'YES ⚠' : 'No', margin + 119, y + 17)
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(7)
+  doc.setTextColor(...TEXT_3)
+  doc.text('ROOT CAUSE', margin + 119, y + 23)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(7.5)
+  doc.setTextColor(...TEXT_2)
+  doc.text(fmt(analysis.root_cause?.replaceAll('_', ' ')), margin + 119, y + 28)
+
+  y += 32
+
+  // Escalation override banner (if applied)
+  if (analysis.escalation_override_applied) {
+    y = checkPageBreak(doc, y, 8)
+    fillRounded(doc, margin, y, innerW, 7, 1.5, [50, 30, 10])
+    doc.setDrawColor(...HIGH)
+    doc.setLineWidth(0.3)
+    doc.roundedRect(margin, y, innerW, 7, 1.5, 1.5, 'S')
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(7)
+    doc.setTextColor(...HIGH)
+    doc.text('⚠  Escalation override applied — risk band raised by structural severity rules', margin + 4, y + 4.5)
+    y += 11
+  }
+
+  y += 2
 
   // ── INCIDENT DETAILS ─────────────────────────────────────────────────────
+  y = checkPageBreak(doc, y, 35)
   y = sectionHeader(doc, 'Incident Details', y)
 
-  doc.setFillColor(...LIGHT_BG)
-  doc.roundedRect(margin, y - 2, innerW, 4.5, 1, 1, 'F')
+  // Narrative box
+  card(doc, margin, y - 2, innerW, 6, BG_CARD2)
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(7.5)
-  doc.setTextColor(...GRAY)
-  doc.text('NARRATIVE', margin + 2, y + 1.8)
-  y += 6
+  doc.setFontSize(7)
+  doc.setTextColor(...TEXT_3)
+  doc.text('NARRATIVE', margin + 3, y + 2.5)
+  y += 7
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
-  doc.setTextColor(...DARK)
-  const narLines = doc.splitTextToSize(analysis.narrative || '—', innerW)
-  doc.text(narLines, margin + 2, y)
-  y += narLines.length * 4.5 + 4
+  doc.setTextColor(...TEXT_1)
+  const narLines = doc.splitTextToSize(analysis.narrative || '—', innerW - 4)
+  y = checkPageBreak(doc, y, narLines.length * 5 + 6)
+  card(doc, margin, y - 2, innerW, narLines.length * 5 + 4)
+  doc.text(narLines, margin + 3, y + 2)
+  y += narLines.length * 5 + 6
 
-  y = checkPageBreak(doc, y, 30)
-  y = keyVal(doc, 'Site', fmt(analysis.site), margin + 2, y)
-  y = keyVal(doc, 'Area', fmt(analysis.area), margin + 2, y)
-  y = keyVal(doc, 'Department', fmt(analysis.department), margin + 2, y)
-  y = keyVal(doc, 'Activity', fmt(analysis.activity), margin + 2, y)
-  y = keyVal(doc, 'Reported On', fmt(analysis.reported_on), margin + 2, y)
-  y = keyVal(doc, 'Report Type', fmt(analysis.report_type), margin + 2, y)
-  y = keyVal(doc, 'Source', fmt(analysis.source), margin + 2, y)
-  y = keyVal(doc, 'Model Version', fmt(analysis.model_version), margin + 2, y)
-  y += 4
+  y = checkPageBreak(doc, y, 40)
+  // Metadata grid (2-column)
+  const col1x = margin + 2
+  const col2x = margin + 94
+  let yl = y
+  let yr = y
+  yl = keyVal(doc, 'Site', fmt(analysis.site), col1x, yl, 32)
+  yl = keyVal(doc, 'Area', fmt(analysis.area), col1x, yl, 32)
+  yl = keyVal(doc, 'Department', fmt(analysis.department), col1x, yl, 32)
+  yl = keyVal(doc, 'Activity', fmt(analysis.activity), col1x, yl, 32)
+  yr = keyVal(doc, 'Reported On', fmt(analysis.reported_on?.slice(0, 19)?.replace('T', ' ')), col2x, yr, 32)
+  yr = keyVal(doc, 'Report Type', fmt(analysis.report_type), col2x, yr, 32)
+  yr = keyVal(doc, 'Source', fmt(analysis.source), col2x, yr, 32)
+  yr = keyVal(doc, 'Model', fmt(analysis.model_version), col2x, yr, 32)
+  if (analysis.input_hash) {
+    yr = keyVal(doc, 'Input Hash', analysis.input_hash.slice(0, 16) + '…', col2x, yr, 32)
+  }
+  y = Math.max(yl, yr) + 5
 
-  // ── LSR TAGS ─────────────────────────────────────────────────────────────
+  // ── SCORE EXPLANATION ────────────────────────────────────────────────────
+  if (analysis.explanation?.tokens?.length) {
+    y = checkPageBreak(doc, y, 30)
+    y = sectionHeader(doc, 'AI Score Explanation — Top Weighted Terms', y)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(7)
+    doc.setTextColor(...TEXT_2)
+    doc.text('Terms the model weighted most heavily when assigning the SIF probability:', margin + 2, y)
+    y += 6
+
+    const tokens = analysis.explanation.tokens.slice(0, 16) // top 16
+    const colW = 59
+    const cols = 3
+    let col = 0
+    let rowY = y
+    let colXs = [margin + 2, margin + 2 + colW, margin + 2 + colW * 2]
+    let colYs = [rowY, rowY, rowY]
+
+    tokens.forEach((t) => {
+      const cx = colXs[col]
+      let cy = colYs[col]
+      cy = checkPageBreak(doc, cy, 8)
+      // Weight bar
+      const weight = Math.min(Math.abs(t.weight || 0), 1)
+      const barMaxW = colW - 25
+      const barW = Math.max(1, weight * barMaxW)
+      const barColor = (t.weight || 0) > 0 ? CRITICAL : LOW
+      doc.setFillColor(...BG_CARD2)
+      doc.roundedRect(cx, cy - 3, colW - 2, 7, 1, 1, 'F')
+      doc.setFillColor(...barColor)
+      doc.rect(cx + 1, cy - 1.5, barW, 2.5, 'F')
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(7)
+      doc.setTextColor(...TEXT_1)
+      doc.text(String(t.token || '').slice(0, 18), cx + 2, cy + 2.8)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(6.5)
+      doc.setTextColor(...TEXT_3)
+      doc.text((t.weight > 0 ? '+' : '') + (t.weight || 0).toFixed(3), cx + colW - 12, cy + 2.8, { align: 'right' })
+      colYs[col] = cy + 10
+      col = (col + 1) % cols
+    })
+    y = Math.max(...colYs) + 4
+  }
+
+  // ── LSR VIOLATIONS ───────────────────────────────────────────────────────
   y = checkPageBreak(doc, y, 25)
   y = sectionHeader(doc, 'Life Saving Rule Violations', y)
 
   if (analysis.lsr_tags?.length) {
     analysis.lsr_tags.forEach((tag) => {
-      y = checkPageBreak(doc, y, 12)
-      doc.setFillColor(...LIGHT_BG)
-      doc.roundedRect(margin, y - 2, innerW, 9, 1, 1, 'F')
+      y = checkPageBreak(doc, y, 13)
+      card(doc, margin, y - 2, innerW, 10, BG_CARD)
+      // Accent left strip matching severity
+      doc.setFillColor(...CRITICAL)
+      doc.rect(margin, y - 2, 3, 10, 'F')
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(8)
-      doc.setTextColor(...DARK)
-      doc.text(tag.rule?.replaceAll('_', ' ') || '—', margin + 3, y + 2)
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(7.5)
-      doc.setTextColor(...GRAY)
-      doc.text(`Confidence: ${pct(tag.confidence)}`, margin + 100, y + 2)
-      y += 11
+      doc.setTextColor(...TEXT_1)
+      doc.text(fmt(tag.rule?.replaceAll('_', ' ')), margin + 6, y + 3.5)
+      // Confidence pill
+      const confColor = tag.confidence > 0.7 ? CRITICAL : HIGH
+      pill(doc, `Confidence: ${pct(tag.confidence)}`, margin + 135, y + 3.5, confColor)
+      y += 13
     })
   } else {
     doc.setFont('helvetica', 'italic')
     doc.setFontSize(8)
-    doc.setTextColor(...GRAY)
+    doc.setTextColor(...TEXT_3)
     doc.text('No LSR violations identified.', margin + 2, y)
     y += 8
   }
-  y += 2
+  y += 3
 
   // ── ENTITIES ─────────────────────────────────────────────────────────────
-  y = checkPageBreak(doc, y, 30)
-  y = sectionHeader(doc, 'Extracted Entities', y)
-
   const entityGroups = [
-    ['Hazards',    analysis.entities?.hazards],
-    ['Equipment',  analysis.entities?.equipment],
-    ['Activities', analysis.entities?.activities],
-    ['Conditions', analysis.entities?.conditions],
-  ]
-  entityGroups.forEach(([label, items]) => {
-    if (!items?.length) return
-    y = checkPageBreak(doc, y, 12)
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(7.5)
-    doc.setTextColor(...GRAY)
-    doc.text(label.toUpperCase(), margin + 2, y)
-    y += 4
-    let px = margin + 2
-    items.forEach((item) => {
-      if (px + doc.getTextWidth(item) + 10 > 196) {
-        px = margin + 2
-        y += 6
-        y = checkPageBreak(doc, y, 8)
-      }
-      px = pill(doc, item, px, y, BRAND)
-    })
-    y += 8
-  })
-  y += 2
+    ['Hazards',    analysis.entities?.hazards,    HIGH],
+    ['Equipment',  analysis.entities?.equipment,  BRAND],
+    ['Activities', analysis.entities?.activities, MEDIUM],
+    ['Conditions', analysis.entities?.conditions, TEXT_3],
+    ['Persons',    analysis.entities?.persons,    LOW],
+  ].filter(([, items]) => items?.length)
 
-  // ── FATALITY TWIN ─────────────────────────────────────────────────────────
-  if (analysis.fatality_twin) {
+  if (entityGroups.length) {
     y = checkPageBreak(doc, y, 30)
+    y = sectionHeader(doc, 'Extracted Entities', y)
+
+    entityGroups.forEach(([label, items, color]) => {
+      y = checkPageBreak(doc, y, 14)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(7)
+      doc.setTextColor(...TEXT_3)
+      doc.text(label.toUpperCase(), margin + 2, y)
+      y += 4
+
+      let px = margin + 2
+      items.forEach((item) => {
+        const iw = doc.getTextWidth(item) + 9
+        if (px + iw > 196) {
+          px = margin + 2
+          y += 7
+          y = checkPageBreak(doc, y, 8)
+        }
+        px = pill(doc, item, px, y, color)
+      })
+      y += 9
+    })
+    y += 2
+  }
+
+  // ── FATALITY TWIN ────────────────────────────────────────────────────────
+  if (analysis.fatality_twin) {
+    y = checkPageBreak(doc, y, 35)
     y = sectionHeader(doc, 'Fatality Twin — Escalation Chain', y)
 
     const twin = analysis.fatality_twin
-    y = keyVal(doc, 'Likelihood', pct(twin.likelihood), margin + 2, y)
-    y = keyVal(doc, 'Matched Cases', String(twin.matched ?? '—'), margin + 2, y)
-    y = keyVal(doc, 'Similarity', pct(twin.similarity), margin + 2, y)
+    // Stats row
+    const statCards = [
+      ['LIKELIHOOD',   pct(twin.likelihood)],
+      ['MATCHED CASES', fmt(twin.matched)],
+      ['SIMILARITY',    pct(twin.similarity)],
+    ]
+    const scW = (innerW - 8) / statCards.length
+    statCards.forEach(([label, val], i) => {
+      const sx = margin + i * (scW + 4)
+      card(doc, sx, y - 2, scW, 14, BG_CARD2)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(6.5)
+      doc.setTextColor(...TEXT_3)
+      doc.text(label, sx + 3, y + 3)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(11)
+      doc.setTextColor(...BRAND)
+      doc.text(val, sx + 3, y + 10)
+    })
+    y += 18
 
     if (twin.chain?.length) {
-      y = checkPageBreak(doc, y, 15)
       doc.setFont('helvetica', 'bold')
-      doc.setFontSize(7.5)
-      doc.setTextColor(...GRAY)
-      doc.text('CHAIN', margin + 2, y)
-      y += 4
+      doc.setFontSize(7)
+      doc.setTextColor(...TEXT_3)
+      doc.text('ESCALATION CHAIN', margin + 2, y)
+      y += 5
+
       twin.chain.forEach((step, i) => {
-        y = checkPageBreak(doc, y, 8)
+        y = checkPageBreak(doc, y, 10)
+        card(doc, margin, y - 2, innerW, 9, BG_CARD)
+        // Step number circle
+        doc.setFillColor(...BRAND_DIM)
+        doc.circle(margin + 6, y + 2.5, 3.5, 'F')
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(7)
+        doc.setTextColor(...WHITE)
+        doc.text(String(i + 1), margin + 6, y + 3.8, { align: 'center' })
+        // Step text
         doc.setFont('helvetica', 'normal')
         doc.setFontSize(7.5)
-        doc.setTextColor(...DARK)
-        doc.text(`${i + 1}. ${step}`, margin + 5, y)
-        y += 4.5
+        doc.setTextColor(...TEXT_1)
+        const stepLines = doc.splitTextToSize(step, innerW - 18)
+        doc.text(stepLines, margin + 13, y + 2.5)
+        y += Math.max(stepLines.length * 5, 10) + 1
       })
     }
-    y += 4
+    y += 5
   }
 
-  // ── CAPA ──────────────────────────────────────────────────────────────────
-  if (analysis.recommendations) {
+  // ── SIMILAR FATALITIES ───────────────────────────────────────────────────
+  if (analysis.similar_fatalities?.length) {
     y = checkPageBreak(doc, y, 30)
-    y = sectionHeader(doc, 'Corrective & Preventive Actions (CAPA)', y)
+    y = sectionHeader(doc, `Matched Fatal Cases (${analysis.similar_fatalities.length})`, y)
 
+    analysis.similar_fatalities.slice(0, 5).forEach((f) => {
+      y = checkPageBreak(doc, y, 16)
+      card(doc, margin, y - 2, innerW, 14, BG_CARD)
+      // Similarity pill
+      const simPct = Math.round((f.similarity || 0) * 100)
+      const simColor = simPct >= 70 ? CRITICAL : simPct >= 50 ? HIGH : MEDIUM
+      pill(doc, `${simPct}% match`, margin + 3, y + 5, simColor)
+      // Report ID
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(7)
+      doc.setTextColor(...TEXT_3)
+      doc.text(fmt(f.report_id), margin + 28, y + 3)
+      // Snippet
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(7)
+      doc.setTextColor(...TEXT_2)
+      const snippet = doc.splitTextToSize((f.narrative || '').slice(0, 130) + '…', innerW - 32)
+      doc.text(snippet, margin + 28, y + 8)
+      y += 17
+    })
+    y += 3
+  }
+
+  // ── SIMILAR INCIDENTS ────────────────────────────────────────────────────
+  if (analysis.similar_incidents?.length) {
+    y = checkPageBreak(doc, y, 30)
+    y = sectionHeader(doc, `Similar Incidents from Corpus (${analysis.similar_incidents.length})`, y)
+
+    analysis.similar_incidents.slice(0, 5).forEach((f) => {
+      y = checkPageBreak(doc, y, 16)
+      card(doc, margin, y - 2, innerW, 14, BG_CARD)
+      const simPct = Math.round((f.similarity || 0) * 100)
+      const simColor = simPct >= 70 ? CRITICAL : simPct >= 50 ? HIGH : MEDIUM
+      pill(doc, `${simPct}% match`, margin + 3, y + 5, simColor)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(7)
+      doc.setTextColor(...TEXT_3)
+      doc.text(fmt(f.report_id), margin + 28, y + 3)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(7)
+      doc.setTextColor(...TEXT_2)
+      const snippet = doc.splitTextToSize((f.narrative || '').slice(0, 130) + '…', innerW - 32)
+      doc.text(snippet, margin + 28, y + 8)
+      y += 17
+    })
+    y += 3
+  }
+
+  // ── CAPA ─────────────────────────────────────────────────────────────────
+  if (analysis.recommendations) {
+    y = checkPageBreak(doc, y, 35)
+    y = sectionHeader(doc, 'Corrective & Preventive Actions (CAPA)', y)
     const rec = analysis.recommendations
 
-    const drawActionList = (title, actions) => {
+    function drawActionList(title, actions) {
       if (!actions?.length) return
-      y = checkPageBreak(doc, y, 15)
+      y = checkPageBreak(doc, y, 14)
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(8)
-      doc.setTextColor(...DARK)
-      doc.text(title, margin + 2, y)
+      doc.setTextColor(...TEXT_2)
+      doc.text(title.toUpperCase(), margin + 2, y)
       y += 5
+
       actions.forEach((a) => {
         y = checkPageBreak(doc, y, 14)
         const pColor = a.priority === 'C1' ? CRITICAL : HIGH
-        pill(doc, a.priority, margin + 4, y, pColor)
+        const aLines = doc.splitTextToSize(`${a.action}  (${a.rule})`, innerW - 22)
+        const cardH = aLines.length * 5.5 + 8
+        card(doc, margin, y - 2, innerW, cardH, BG_CARD)
+        // Priority pill
+        pill(doc, a.priority, margin + 4, y + 5, pColor)
         doc.setFont('helvetica', 'normal')
-        doc.setFontSize(7.5)
-        doc.setTextColor(...DARK)
-        const aLines = doc.splitTextToSize(`${a.action} (${a.rule})`, innerW - 18)
-        doc.text(aLines, margin + 16, y - 1)
-        y += aLines.length * 4.5 + 3
+        doc.setFontSize(8)
+        doc.setTextColor(...TEXT_1)
+        doc.text(aLines, margin + 18, y + 3)
+        // Rule tag
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(6.5)
+        doc.setTextColor(...TEXT_3)
+        y += cardH + 2
       })
       y += 2
     }
@@ -304,74 +571,115 @@ export function generateIncidentPdf(analysis) {
     drawActionList('Corrective Actions', rec.corrective_actions)
     drawActionList('Preventive Actions', rec.preventive_actions)
 
+    // Training needs
     if (rec.training_needs?.length) {
-      y = checkPageBreak(doc, y, 15)
+      y = checkPageBreak(doc, y, 14)
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(8)
-      doc.setTextColor(...DARK)
-      doc.text('Training Needs', margin + 2, y)
+      doc.setTextColor(...TEXT_2)
+      doc.text('TRAINING NEEDS', margin + 2, y)
       y += 5
+
       rec.training_needs.forEach((t) => {
-        y = checkPageBreak(doc, y, 8)
+        y = checkPageBreak(doc, y, 9)
+        const tLines = doc.splitTextToSize(`▸  ${t}`, innerW - 6)
+        card(doc, margin, y - 2, innerW, tLines.length * 5 + 4, BG_CARD)
         doc.setFont('helvetica', 'normal')
         doc.setFontSize(7.5)
-        doc.setTextColor(...DARK)
-        const tLines = doc.splitTextToSize(`• ${t}`, innerW - 6)
-        doc.text(tLines, margin + 4, y)
-        y += tLines.length * 4.5
+        doc.setTextColor(...TEXT_1)
+        doc.text(tLines, margin + 4, y + 2)
+        y += tLines.length * 5 + 6
       })
-      y += 3
+      y += 2
     }
 
+    // Toolbox talk
     if (rec.toolbox_talk) {
-      y = checkPageBreak(doc, y, 20)
+      y = checkPageBreak(doc, y, 25)
       const tt = rec.toolbox_talk
-      doc.setFillColor(239, 246, 255)
-      doc.roundedRect(margin, y - 2, innerW, 7, 1, 1, 'F')
+      // Header
+      card(doc, margin, y - 2, innerW, 9, BG_CARD2)
+      doc.setFillColor(...BRAND)
+      doc.rect(margin, y - 2, 3, 9, 'F')
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(8)
       doc.setTextColor(...BRAND)
-      doc.text(`Toolbox Talk (${tt.duration_minutes} min): ${tt.title}`, margin + 3, y + 2.5)
-      y += 9
+      doc.text(`Toolbox Talk (${tt.duration_minutes} min): ${tt.title}`, margin + 6, y + 3.5)
+      y += 12
+
       ;(tt.points || []).forEach((p) => {
-        y = checkPageBreak(doc, y, 8)
+        y = checkPageBreak(doc, y, 9)
+        const pLines = doc.splitTextToSize(`★  ${p}`, innerW - 8)
         doc.setFont('helvetica', 'normal')
         doc.setFontSize(7.5)
-        doc.setTextColor(...DARK)
-        const pLines = doc.splitTextToSize(`★ ${p}`, innerW - 6)
-        doc.text(pLines, margin + 4, y)
-        y += pLines.length * 4.5
+        doc.setTextColor(...TEXT_2)
+        doc.text(pLines, margin + 6, y)
+        y += pLines.length * 5
       })
-      y += 3
+      y += 4
     }
 
+    // Precedent note
     if (rec.precedent_note) {
       y = checkPageBreak(doc, y, 12)
-      doc.setFillColor(245, 245, 245)
-      doc.roundedRect(margin, y - 2, innerW, 4.5, 1, 1, 'F')
+      const prLines = doc.splitTextToSize(`"  ${rec.precedent_note}  "`, innerW - 8)
+      card(doc, margin, y - 2, innerW, prLines.length * 5 + 6, BG_CARD2)
+      doc.setFillColor(...TEXT_3)
+      doc.rect(margin, y - 2, 3, prLines.length * 5 + 6, 'F')
       doc.setFont('helvetica', 'italic')
       doc.setFontSize(7.5)
-      doc.setTextColor(...GRAY)
-      const prLines = doc.splitTextToSize(rec.precedent_note, innerW - 6)
-      doc.text(prLines, margin + 3, y + 1.5)
-      y += prLines.length * 4.5 + 4
+      doc.setTextColor(...TEXT_2)
+      doc.text(prLines, margin + 7, y + 3)
+      y += prLines.length * 5 + 8
     }
   }
 
-  // ── FOOTER ───────────────────────────────────────────────────────────────
+  // ── SAFETY MEMORY ─────────────────────────────────────────────────────────
+  const sm = analysis.safety_memory
+  if (sm && !sm.error && sm.matches?.length) {
+    y = checkPageBreak(doc, y, 30)
+    y = sectionHeader(doc, `Safety Memory — Has This Happened Before? (${sm.matches.length} matches)`, y)
+
+    sm.matches.slice(0, 4).forEach((m) => {
+      y = checkPageBreak(doc, y, 16)
+      card(doc, margin, y - 2, innerW, 14, BG_CARD)
+      const simPct = Math.round((m.similarity || 0) * 100)
+      pill(doc, `${simPct}% recall`, margin + 3, y + 5, BRAND_DIM)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(7)
+      doc.setTextColor(...TEXT_3)
+      doc.text(fmt(m.report_id), margin + 28, y + 3)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(7)
+      doc.setTextColor(...TEXT_2)
+      const sn = doc.splitTextToSize((m.narrative || '').slice(0, 130) + '…', innerW - 32)
+      doc.text(sn, margin + 28, y + 8)
+      y += 17
+    })
+    y += 3
+  }
+
+  // ── FOOTER ON EVERY PAGE ─────────────────────────────────────────────────
   const pageCount = doc.getNumberOfPages()
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i)
     doc.setDrawColor(...BORDER)
-    doc.setLineWidth(0.3)
-    doc.line(margin, 285, 196, 285)
+    doc.setLineWidth(0.25)
+    doc.line(margin, 284, 196, 284)
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(6)
+    doc.setTextColor(...BRAND)
+    doc.text('Kavach AI', margin, 289)
+
     doc.setFont('helvetica', 'normal')
-    doc.setFontSize(6.5)
-    doc.setTextColor(...GRAY)
-    doc.text(`SIF Sentinel AI — Confidential Safety Report · ${rId}`, margin, 289)
+    doc.setTextColor(...TEXT_3)
+    doc.text(` — Confidential Safety Report · ${rId}`, margin + 15, 289)
+
+    doc.setTextColor(...TEXT_3)
     doc.text(`Page ${i} of ${pageCount}`, 196, 289, { align: 'right' })
   }
 
   // ── SAVE ─────────────────────────────────────────────────────────────────
-  doc.save(`SIF-Report-${rId}.pdf`)
+  doc.save(`KavachAI-Report-${rId}.pdf`)
 }
