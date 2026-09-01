@@ -154,6 +154,7 @@ ENVIRONMENT:
 ROOT/
 ├── .gitignore                          Git ignore rules
 ├── README.md                           Project documentation (125 lines)
+├── work.txt                            Page by page full explanation document
 ├── docker-compose.yml                  Docker orchestration for backend + frontend
 │
 ├── data/
@@ -1314,9 +1315,6 @@ INFRASTRUCTURE:
   8. WHAT IS NOT WORKING / KNOWN LIMITATIONS
 ================================================================================
 
-  ❌ No real MongoDB — data is in-memory only, lost on restart
-     (SRS §6.3/§9 specifies MongoDB)
-
   ❌ No real Sentence-Transformer embeddings — using TF-IDF/SVD instead
      (SRS §7.2 specifies all-MiniLM-L6-v2)
 
@@ -1353,8 +1351,6 @@ INFRASTRUCTURE:
   ⚠️  Barrier failure detection fires on only ~1% of narratives
      (Conservative by design — OSHA abstracts rarely state which control failed)
 
-  ⚠️  Live submissions are in-memory only (lost on server restart)
-
   ⚠️  No production HTTPS — runs on HTTP locally
 
   ⚠️  No rate limiting on API endpoints
@@ -1370,10 +1366,9 @@ INFRASTRUCTURE:
 Full documentation: docs/DEVIATIONS.md (9,887 bytes)
 
 Key deviations:
-  1. MongoDB → In-memory store (no outbound access to MongoDB Atlas)
-  2. Sentence-Transformers → TF-IDF/SVD (no access to huggingface.co)
-  3. DistilBERT → LogisticRegression text head (same architecture, swap only)
-  4. LLM Copilot → Intent-routed extractive answering (no LLM endpoint)
+  1. Sentence-Transformers → TF-IDF/SVD (no access to huggingface.co)
+  2. DistilBERT → LogisticRegression text head (same architecture, swap only)
+  3. LLM Copilot → Intent-routed extractive answering (no LLM endpoint)
   5. LLM NER back-fill → Omitted (gazetteer + regex only)
   6. MinHash near-dedup → Dense cosine (capped at 6,000 rows)
   7. Atlas Vector Search → FAISS IndexFlatIP (offline equivalent)
@@ -1481,8 +1476,52 @@ DATE: 2026-08-30 (Changes made by Rydhym)
   - Registered the Report Incident page in App.jsx routing and added the "Report Incident" navigation link with the FileText icon to Sidebar.jsx.
   - Validated all 20 API endpoints, Safety Memory, and structured query parser using a custom Python smoke test validation script.
 
+DATE: 2026-09-01 (Documentation)
+  - Created work.txt detailing the full working of all frontend pages of the system
 
-================================================================================
+DATE: 2026-09-01 (MongoDB Atlas Migration)
+  - ARCHITECTURE CHANGE: Added MongoDB Atlas as persistence layer for live submissions
+  - Hybrid model: 16k pre-scored ML corpus stays in-memory for analytics performance;
+    live user submissions now persist across server restarts via MongoDB
+  - Created backend/app/database.py: singleton pymongo connection module with graceful
+    degradation (returns None if Atlas unreachable, app continues in memory-only mode)
+  - Updated backend/app/store.py: on startup, merges persisted live submissions from
+    MongoDB into in-memory list; add_incident() now writes to both memory and MongoDB
+  - Updated backend/app/main.py: loads .env via python-dotenv before any other import
+  - Updated backend/app/routers/health.py: exposes mongo_connected boolean in health check
+  - Created backend/scripts/seed_mongo.py: idempotent upsert of full corpus into MongoDB
+  - Created backend/.env: real secrets file (gitignored, never committed)
+  - Created backend/.env.example: safe placeholder template (committed to repo)
+  - Created docs/DATABASE_SETUP.md: full setup, seed, verification, and security guide
+  - Updated .gitignore: added .env.* wildcard and !.env.example exception
+  - Updated backend/requirements.txt: added pymongo[srv]==4.* and python-dotenv==1.*
+  - Installed pymongo 4.17.0 and python-dotenv into .venv
+  - Verified: database module loads cleanly and degrades gracefully with placeholder password
+  - MongoDB collection: reports (report_id unique index + 5 additional indexes)
+
+DATE: 2026-09-01 (PDF Download Feature)
+  - Added PDF download to Incident Detail page (frontend)
+  - Created frontend/src/lib/generateIncidentPdf.js — pure client-side jsPDF generator
+    Produces a branded A4 multi-page PDF with:
+      · Branded cover header (SIF Sentinel AI, report ID, timestamp)
+      · Risk band summary panel (color-coded by CRITICAL/HIGH/MEDIUM/LOW)
+      · SIF probability, confidence, barrier failure, root cause
+      · Full narrative text
+      · Incident metadata (site, area, department, activity, date)
+      · LSR violation list with confidence scores
+      · Extracted entities (hazards, equipment, activities, conditions) as visual pills
+      · Fatality Twin escalation chain
+      · Full CAPA (corrective, preventive, training needs, toolbox talk, precedent note)
+      · Page numbers and confidential footer on every page
+  - Updated frontend/src/pages/IncidentDetail.jsx:
+      · Added import for generateIncidentPdf and useState/FileDown/Loader2
+      · Added "Download PDF" button inline next to the report ID in the header card
+      · Button shows spinner and "Generating…" while PDF is being rendered
+      · Button disabled during generation to prevent double-clicks
+  - Installed jspdf npm package into frontend
+  - Frontend build verified: no errors, clean output
+
+
   12. FUTURE UPDATES & IMPROVEMENTS NEEDED
 ================================================================================
 

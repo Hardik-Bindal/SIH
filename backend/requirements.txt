@@ -12,3 +12,5 @@ joblib
 reportlab==4.*
 python-multipart
 pyarrow
+pymongo[srv]==4.*
+python-dotenv==1.*

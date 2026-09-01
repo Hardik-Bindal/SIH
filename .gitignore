@@ -29,4 +29,11 @@ frontend/.vite/
 # OS / editor
 .DS_Store
 *.log
+
+# Environment variables — never commit real secrets
 .env
+.env.*
+!.env.example
+
+# Extra/scratch notes
+extra/
