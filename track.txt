@@ -1499,6 +1499,28 @@ DATE: 2026-09-01 (MongoDB Atlas Migration)
   - Verified: database module loads cleanly and degrades gracefully with placeholder password
   - MongoDB collection: reports (report_id unique index + 5 additional indexes)
 
+DATE: 2026-09-01 (PDF Download Feature)
+  - Added PDF download to Incident Detail page (frontend)
+  - Created frontend/src/lib/generateIncidentPdf.js — pure client-side jsPDF generator
+    Produces a branded A4 multi-page PDF with:
+      · Branded cover header (SIF Sentinel AI, report ID, timestamp)
+      · Risk band summary panel (color-coded by CRITICAL/HIGH/MEDIUM/LOW)
+      · SIF probability, confidence, barrier failure, root cause
+      · Full narrative text
+      · Incident metadata (site, area, department, activity, date)
+      · LSR violation list with confidence scores
+      · Extracted entities (hazards, equipment, activities, conditions) as visual pills
+      · Fatality Twin escalation chain
+      · Full CAPA (corrective, preventive, training needs, toolbox talk, precedent note)
+      · Page numbers and confidential footer on every page
+  - Updated frontend/src/pages/IncidentDetail.jsx:
+      · Added import for generateIncidentPdf and useState/FileDown/Loader2
+      · Added "Download PDF" button inline next to the report ID in the header card
+      · Button shows spinner and "Generating…" while PDF is being rendered
+      · Button disabled during generation to prevent double-clicks
+  - Installed jspdf npm package into frontend
+  - Frontend build verified: no errors, clean output
+
 
   12. FUTURE UPDATES & IMPROVEMENTS NEEDED
 ================================================================================

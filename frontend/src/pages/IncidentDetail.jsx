@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, ShieldOff, GitBranch, MessageSquareText } from 'lucide-react'
+import { ArrowLeft, ShieldOff, GitBranch, MessageSquareText, FileDown, Loader2 } from 'lucide-react'
 import { useIncident, useIncidentMemory } from '../api/queries'
 import AsyncSection from '../components/common/AsyncSection'
 import { SkeletonBlock, SkeletonText } from '../components/common/Skeleton'
@@ -16,6 +17,7 @@ import SafetyMemoryPanel from '../components/memory/SafetyMemoryPanel'
 import EmptyState from '../components/common/EmptyState'
 import { BrainCircuit } from 'lucide-react'
 import { formatDate, truncate } from '../lib/format'
+import { generateIncidentPdf } from '../lib/generateIncidentPdf'
 
 // Its own AsyncSection (and therefore its own error boundary): a Safety
 // Memory outage names itself and leaves the rest of the analysis intact
@@ -76,6 +78,16 @@ function FactTile({ icon: Icon, label, value, accent = 'text-fg' }) {
 export default function IncidentDetail() {
   const { id } = useParams()
   const query = useIncident(id)
+  const [pdfLoading, setPdfLoading] = useState(false)
+
+  async function handleDownloadPdf(analysis) {
+    setPdfLoading(true)
+    try {
+      await generateIncidentPdf(analysis)
+    } finally {
+      setPdfLoading(false)
+    }
+  }
 
   return (
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
@@ -105,6 +117,19 @@ export default function IncidentDetail() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-mono text-xs text-fg-3">{analysis.report_id}</span>
                       {analysis.is_synthetic_org_fields && <SyntheticBadge label="Synthetic org fields" />}
+                      <button
+                        type="button"
+                        id={`btn-download-pdf-${analysis.report_id}`}
+                        onClick={() => handleDownloadPdf(analysis)}
+                        disabled={pdfLoading}
+                        title="Download incident report as PDF"
+                        className="ml-1 inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface-2 px-2.5 py-1 text-xs font-semibold text-fg-2 transition-all hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 disabled:opacity-60"
+                      >
+                        {pdfLoading
+                          ? <Loader2 size={12} className="animate-spin" aria-hidden="true" />
+                          : <FileDown size={12} aria-hidden="true" />}
+                        {pdfLoading ? 'Generating…' : 'Download PDF'}
+                      </button>
                     </div>
                     <p className="mt-2 max-w-2xl font-display text-sm font-semibold leading-relaxed tracking-tight text-fg sm:text-base">
                       {analysis.narrative}
