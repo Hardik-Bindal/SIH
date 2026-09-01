@@ -154,6 +154,7 @@ ENVIRONMENT:
 ROOT/
 ├── .gitignore                          Git ignore rules
 ├── README.md                           Project documentation (125 lines)
+├── work.txt                            Page by page full explanation document
 ├── docker-compose.yml                  Docker orchestration for backend + frontend
 │
 ├── data/
@@ -1481,8 +1482,30 @@ DATE: 2026-08-30 (Changes made by Rydhym)
   - Registered the Report Incident page in App.jsx routing and added the "Report Incident" navigation link with the FileText icon to Sidebar.jsx.
   - Validated all 20 API endpoints, Safety Memory, and structured query parser using a custom Python smoke test validation script.
 
+DATE: 2026-09-01 (Documentation)
+  - Created work.txt detailing the full working of all frontend pages of the system
 
-================================================================================
+DATE: 2026-09-01 (MongoDB Atlas Migration)
+  - ARCHITECTURE CHANGE: Added MongoDB Atlas as persistence layer for live submissions
+  - Hybrid model: 16k pre-scored ML corpus stays in-memory for analytics performance;
+    live user submissions now persist across server restarts via MongoDB
+  - Created backend/app/database.py: singleton pymongo connection module with graceful
+    degradation (returns None if Atlas unreachable, app continues in memory-only mode)
+  - Updated backend/app/store.py: on startup, merges persisted live submissions from
+    MongoDB into in-memory list; add_incident() now writes to both memory and MongoDB
+  - Updated backend/app/main.py: loads .env via python-dotenv before any other import
+  - Updated backend/app/routers/health.py: exposes mongo_connected boolean in health check
+  - Created backend/scripts/seed_mongo.py: idempotent upsert of full corpus into MongoDB
+  - Created backend/.env: real secrets file (gitignored, never committed)
+  - Created backend/.env.example: safe placeholder template (committed to repo)
+  - Created docs/DATABASE_SETUP.md: full setup, seed, verification, and security guide
+  - Updated .gitignore: added .env.* wildcard and !.env.example exception
+  - Updated backend/requirements.txt: added pymongo[srv]==4.* and python-dotenv==1.*
+  - Installed pymongo 4.17.0 and python-dotenv into .venv
+  - Verified: database module loads cleanly and degrades gracefully with placeholder password
+  - MongoDB collection: reports (report_id unique index + 5 additional indexes)
+
+
   12. FUTURE UPDATES & IMPROVEMENTS NEEDED
 ================================================================================
 

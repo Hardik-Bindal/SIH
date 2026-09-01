@@ -1,17 +1,26 @@
 """
-In-memory data store, loaded once at process startup from the ML artifacts
-built by ml/models/build_analytics_artifacts.py.
+Hybrid data store: in-memory + MongoDB Atlas persistence.
 
-SRS §6.3/§9 specify MongoDB as the datastore. This sandbox has no reachable
-MongoDB instance (see docs/DEVIATIONS.md), and the full demo corpus is
-~16k rows -- small enough that an in-memory list + pandas recompute on read
-comfortably beats the sub-400ms dashboard target (NFR-02) without a
-separate cache tier, so aggregates are computed fresh on every request from
-the canonical in-memory list rather than served from a manually-invalidated
-cache. New reports submitted through POST /api/v1/incidents are appended to
-the same list, so analytics immediately reflect them.
+Startup flow:
+  1. Load pre-scored ML corpus from ml/artifacts/incidents_scored.jsonl
+     into self.incidents (in-memory list — unchanged from original).
+  2. Load fatality reference corpus from data/processed/fatalities.parquet.
+  3. Load forecast.json and graph.json artifacts.
+  4. Fetch any persisted LIVE_SUBMISSION documents from MongoDB and merge
+     them into self.incidents, so user-submitted reports survive restarts.
+
+Mutation flow (POST /api/v1/incidents):
+  - Append to in-memory list (immediate analytics reflect new report).
+  - Upsert to MongoDB "reports" collection (persistence across restarts).
+
+Analytics:
+  - All aggregates run in-memory via pandas — same performance as before.
+
+SRS §6.3/§9: MongoDB is now the persistence layer for live submissions.
+Static ML artifacts (forecast, graph, patterns) remain file-based.
 """
 import json
+import logging
 import sys
 from pathlib import Path
 from threading import Lock
@@ -22,6 +31,8 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
 from ml.models.build_analytics_artifacts import build_aggregates  # noqa: E402
+
+logger = logging.getLogger("sif.store")
 
 ARTIFACTS = ROOT / "ml" / "artifacts"
 PROCESSED = ROOT / "data" / "processed"
@@ -42,6 +53,12 @@ SITE_COORDS = {
 }
 
 
+def _strip_mongo_id(doc: dict) -> dict:
+    """Remove MongoDB _id field so responses stay clean JSON."""
+    doc.pop("_id", None)
+    return doc
+
+
 class Store:
     def __init__(self):
         self._lock = Lock()
@@ -53,6 +70,7 @@ class Store:
         self._load()
 
     def _load(self):
+        # --- 1. Pre-scored incident corpus (ML artifacts) ---
         scored_path = ARTIFACTS / "incidents_scored.jsonl"
         if scored_path.exists():
             with open(scored_path) as f:
@@ -60,6 +78,10 @@ class Store:
         if self.incidents:
             self.model_version = self.incidents[0].get("model_version", "unknown")
 
+        # Track report_ids already loaded to avoid duplicates from MongoDB
+        loaded_ids: set[str] = {r["report_id"] for r in self.incidents}
+
+        # --- 2. Fatality reference corpus ---
         fat_path = PROCESSED / "fatalities.parquet"
         if fat_path.exists():
             fdf = pd.read_parquet(fat_path)
@@ -67,14 +89,12 @@ class Store:
                 r.report_id: {
                     "report_id": r.report_id, "narrative": r.narrative,
                     "site": r.site, "area": r.area, "city": r.city, "state": r.state,
-                    # Carried so Safety Memory can date a fatality precedent —
-                    # without it the recurrence window would silently span only
-                    # the incident corpus.
                     "reported_on": str(r.reported_on) if r.reported_on is not None else None,
                 }
                 for r in fdf.itertuples()
             }
 
+        # --- 3. Static ML artifacts ---
         fc_path = ARTIFACTS / "forecast.json"
         if fc_path.exists():
             self.forecast = json.load(open(fc_path))
@@ -83,10 +103,61 @@ class Store:
         if graph_path.exists():
             self.graph = json.load(open(graph_path))
 
+        # --- 4. Merge persisted live submissions from MongoDB ---
+        self._load_from_mongo(loaded_ids)
+
+    def _load_from_mongo(self, already_loaded: set[str]):
+        """
+        Fetch LIVE_SUBMISSION documents from MongoDB that are not already
+        in the in-memory corpus (i.e., user-submitted reports from past sessions).
+        This is called once at startup to restore persistence.
+        """
+        try:
+            from app.database import get_db
+            db = get_db()
+            if db is None:
+                return
+            col = db["reports"]
+            cursor = col.find(
+                {"source": "LIVE_SUBMISSION"},
+                projection={"_id": 0},
+            )
+            count = 0
+            for doc in cursor:
+                if doc.get("report_id") not in already_loaded:
+                    self.incidents.append(doc)
+                    count += 1
+            if count:
+                logger.info("Restored %d live submission(s) from MongoDB.", count)
+        except Exception as exc:
+            logger.warning("Could not load live submissions from MongoDB: %s", exc)
+
     # ---- mutation --------------------------------------------------------
     def add_incident(self, analysis: dict):
+        """
+        Append the incident to the in-memory list (so analytics reflect it
+        immediately) and persist it to MongoDB (so it survives restarts).
+        """
         with self._lock:
             self.incidents.append(analysis)
+
+        # Persist to MongoDB — non-blocking on failure so a Mongo outage
+        # does not break incident submission.
+        try:
+            from app.database import get_db
+            db = get_db()
+            if db is not None:
+                doc = {k: v for k, v in analysis.items()}
+                db["reports"].update_one(
+                    {"report_id": analysis["report_id"]},
+                    {"$set": doc},
+                    upsert=True,
+                )
+        except Exception as exc:
+            logger.warning(
+                "Failed to persist incident %s to MongoDB: %s",
+                analysis.get("report_id"), exc,
+            )
 
     # ---- reads -------------------------------------------------------
     def get_by_id(self, report_id: str):

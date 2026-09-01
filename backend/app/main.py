@@ -1,4 +1,10 @@
 import os
+
+# Load environment variables from backend/.env before anything else.
+# python-dotenv silently ignores missing files, so this is safe in all envs.
+from dotenv import load_dotenv
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "..", ".env"))
+
 os.environ["OMP_NUM_THREADS"] = "1"
 
 import sys
@@ -41,8 +47,12 @@ async def unhandled_exception_handler(request, exc):
 
 @app.on_event("startup")
 def warm_up():
+    # Import database module to trigger connection attempt before store loads.
+    # This ensures persisted live submissions can be fetched at store init time.
+    from app.database import mongo_available
     from app.store import get_store
     from ml.pipeline.inference import get_engine
     get_store()
     get_engine()
-    print("SIF Sentinel AI backend ready.")
+    status = "connected" if mongo_available() else "unavailable (memory-only mode)"
+    print(f"SIF Sentinel AI backend ready. MongoDB: {status}")

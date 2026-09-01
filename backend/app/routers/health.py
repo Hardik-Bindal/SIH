@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.database import mongo_available
 from app.store import get_store
 
 router = APIRouter()
@@ -13,4 +14,5 @@ def health():
         "models_loaded": bool(store.incidents),
         "corpus_size": len(store.incidents) + len(store.fatalities_by_id),
         "model_version": store.model_version,
+        "mongo_connected": mongo_available(),
     }
