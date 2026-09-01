@@ -241,7 +241,11 @@ export default function IncidentDetail() {
               )}
 
               <Section title="Recommended CAPA">
-                <CapaPanel reportId={analysis.report_id} recommendations={analysis.recommendations} />
+                <CapaPanel
+                  reportId={analysis.report_id}
+                  recommendations={analysis.recommendations}
+                  onExport={() => handleDownloadPdf(analysis)}
+                />
               </Section>
 
               <section className="card flex h-96 flex-col overflow-hidden xl:hidden">
