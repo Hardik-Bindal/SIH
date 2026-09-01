@@ -1315,9 +1315,6 @@ INFRASTRUCTURE:
   8. WHAT IS NOT WORKING / KNOWN LIMITATIONS
 ================================================================================
 
-  ❌ No real MongoDB — data is in-memory only, lost on restart
-     (SRS §6.3/§9 specifies MongoDB)
-
   ❌ No real Sentence-Transformer embeddings — using TF-IDF/SVD instead
      (SRS §7.2 specifies all-MiniLM-L6-v2)
 
@@ -1354,8 +1351,6 @@ INFRASTRUCTURE:
   ⚠️  Barrier failure detection fires on only ~1% of narratives
      (Conservative by design — OSHA abstracts rarely state which control failed)
 
-  ⚠️  Live submissions are in-memory only (lost on server restart)
-
   ⚠️  No production HTTPS — runs on HTTP locally
 
   ⚠️  No rate limiting on API endpoints
@@ -1371,10 +1366,9 @@ INFRASTRUCTURE:
 Full documentation: docs/DEVIATIONS.md (9,887 bytes)
 
 Key deviations:
-  1. MongoDB → In-memory store (no outbound access to MongoDB Atlas)
-  2. Sentence-Transformers → TF-IDF/SVD (no access to huggingface.co)
-  3. DistilBERT → LogisticRegression text head (same architecture, swap only)
-  4. LLM Copilot → Intent-routed extractive answering (no LLM endpoint)
+  1. Sentence-Transformers → TF-IDF/SVD (no access to huggingface.co)
+  2. DistilBERT → LogisticRegression text head (same architecture, swap only)
+  3. LLM Copilot → Intent-routed extractive answering (no LLM endpoint)
   5. LLM NER back-fill → Omitted (gazetteer + regex only)
   6. MinHash near-dedup → Dense cosine (capped at 6,000 rows)
   7. Atlas Vector Search → FAISS IndexFlatIP (offline equivalent)
