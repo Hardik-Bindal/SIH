@@ -67,6 +67,7 @@ class Store:
         self.forecast: dict = {}
         self.graph: dict = {}
         self.model_version = "unloaded"
+        self._cached_aggregates = None
         self._load()
 
     def _load(self):
@@ -140,6 +141,7 @@ class Store:
         """
         with self._lock:
             self.incidents.append(analysis)
+            self._cached_aggregates = None  # Invalidate cache
 
         # Persist to MongoDB — non-blocking on failure so a Mongo outage
         # does not break incident submission.
@@ -190,7 +192,10 @@ class Store:
         return rows
 
     def aggregates(self) -> dict:
-        return build_aggregates(self.incidents)
+        with self._lock:
+            if self._cached_aggregates is None:
+                self._cached_aggregates = build_aggregates(self.incidents)
+            return self._cached_aggregates
 
     def heatmap_geojson(self) -> dict:
         features = []
