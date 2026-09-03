@@ -244,7 +244,7 @@ export function generateIncidentPdf(analysis) {
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(9)
   doc.setTextColor(...(bf ? CRITICAL : LOW))
-  doc.text(bf ? 'YES ⚠' : 'No', margin + 119, y + 17)
+  doc.text(bf ? 'YES' : 'NO', margin + 119, y + 17)
 
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(7)
@@ -347,7 +347,7 @@ export function generateIncidentPdf(analysis) {
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(7)
       doc.setTextColor(...TEXT_1)
-      doc.text(String(t.token || '').slice(0, 18), cx + 2, cy + 2.8)
+      doc.text(String(t.term || t.token || '').slice(0, 18), cx + 2, cy + 2.8)
       doc.setFont('helvetica', 'normal')
       doc.setFontSize(6.5)
       doc.setTextColor(...TEXT_3)
@@ -374,8 +374,10 @@ export function generateIncidentPdf(analysis) {
       doc.setTextColor(...TEXT_1)
       doc.text(fmt(tag.rule?.replaceAll('_', ' ')), margin + 6, y + 3.5)
       // Confidence pill
-      const confColor = tag.confidence > 0.7 ? CRITICAL : HIGH
-      pill(doc, `Confidence: ${pct(tag.confidence)}`, margin + 135, y + 3.5, confColor)
+      if (tag.confidence != null) {
+        const confColor = tag.confidence > 0.7 ? CRITICAL : HIGH
+        pill(doc, `Confidence: ${pct(tag.confidence)}`, margin + 135, y + 3.5, confColor)
+      }
       y += 13
     })
   } else {
@@ -429,6 +431,13 @@ export function generateIncidentPdf(analysis) {
     y = sectionHeader(doc, 'Fatality Twin — Escalation Chain', y)
 
     const twin = analysis.fatality_twin
+    
+    doc.setFont('helvetica', 'italic')
+    doc.setFontSize(7)
+    doc.setTextColor(...TEXT_3)
+    doc.text('Disclaimer: Model projection based on historical cases, not a prediction of an actual outcome.', margin + 2, y)
+    y += 6
+
     // Stats row
     const statCards = [
       ['LIKELIHOOD',   pct(twin.likelihood)],
@@ -582,7 +591,7 @@ export function generateIncidentPdf(analysis) {
 
       rec.training_needs.forEach((t) => {
         y = checkPageBreak(doc, y, 9)
-        const tLines = doc.splitTextToSize(`▸  ${t}`, innerW - 6)
+        const tLines = doc.splitTextToSize(`-  ${t}`, innerW - 6)
         card(doc, margin, y - 2, innerW, tLines.length * 5 + 4, BG_CARD)
         doc.setFont('helvetica', 'normal')
         doc.setFontSize(7.5)
@@ -609,7 +618,7 @@ export function generateIncidentPdf(analysis) {
 
       ;(tt.points || []).forEach((p) => {
         y = checkPageBreak(doc, y, 9)
-        const pLines = doc.splitTextToSize(`★  ${p}`, innerW - 8)
+        const pLines = doc.splitTextToSize(`-  ${p}`, innerW - 8)
         doc.setFont('helvetica', 'normal')
         doc.setFontSize(7.5)
         doc.setTextColor(...TEXT_2)

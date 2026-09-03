@@ -259,7 +259,11 @@ class InferenceEngine:
         root_cause = root_cause_detail["primary"]
 
         twin_matches = [m for m in similar_fatalities if m["similarity"] >= 0.30][:5] or similar_fatalities[:3]
-        barrier_text = "Lock-out/isolation not verified" if barrier_failure else None
+        failed_controls = entities.get("failed_controls", [])
+        if failed_controls:
+            barrier_text = failed_controls[0]
+        else:
+            barrier_text = "Control absent or bypassed" if barrier_failure else None
         twin = build_twin(narrative, twin_matches, barrier_text) if twin_matches else None
 
         recs = generate_recommendations(
