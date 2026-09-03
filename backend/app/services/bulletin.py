@@ -21,7 +21,7 @@ def build_bulletin_pdf(scope: str, site: str, aggregates: dict, top_reports: lis
     title_style = ParagraphStyle("TitleX", parent=styles["Title"], fontSize=18)
     elements = []
 
-    elements.append(Paragraph(f"SIF Sentinel AI — {scope.title()} Safety Bulletin", title_style))
+    elements.append(Paragraph(f"KAVACH AI — {scope.title()} Safety Bulletin", title_style))
     elements.append(Paragraph(
         f"Generated {datetime.now().strftime('%Y-%m-%d %H:%M')}"
         + (f" · Scope: {site}" if site else " · Scope: All Sites"),

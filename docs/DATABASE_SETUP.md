@@ -1,6 +1,6 @@
-# Database Setup Guide — SIF Sentinel AI
+# Database Setup Guide — KAVACH AI
 
-This document explains how to configure and connect to MongoDB Atlas for the SIF Sentinel AI platform.
+This document explains how to configure and connect to MongoDB Atlas for the KAVACH AI platform.
 
 ---
 
@@ -108,12 +108,12 @@ uvicorn app.main:app --reload --app-dir backend
 Startup log shows MongoDB status:
 
 ```
-SIF Sentinel AI backend ready. MongoDB: connected
+KAVACH AI backend ready. MongoDB: connected
 ```
 
 If MongoDB is unavailable:
 ```
-SIF Sentinel AI backend ready. MongoDB: unavailable (memory-only mode)
+KAVACH AI backend ready. MongoDB: unavailable (memory-only mode)
 ```
 
 In memory-only mode, all existing functionality works — only live submissions won't persist across restarts.

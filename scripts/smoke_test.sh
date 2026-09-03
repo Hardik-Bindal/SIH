@@ -13,7 +13,7 @@ check_200() {
   [ "$code" = "200" ] && pass "$desc" || { fail "$desc (HTTP $code)"; }
 }
 
-echo "== SIF Sentinel AI smoke test against $BASE =="
+echo "== KAVACH AI smoke test against $BASE =="
 
 check_200 "health" "$BASE/api/v1/health"
 check_200 "kpis" "$BASE/api/v1/analytics/kpis"

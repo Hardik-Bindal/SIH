@@ -1,5 +1,5 @@
 """
-ETL pipeline for SIF Sentinel AI (SRS section 5.3).
+ETL pipeline for KAVACH AI (SRS section 5.3).
 
 Stages: acquisition -> cleaning -> de-duplication -> enrichment -> labelling
 -> splitting. Embedding (stage 7) lives in ml/pipeline/embeddings.py because

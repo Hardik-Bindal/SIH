@@ -1,7 +1,36 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileText, Loader2, Sparkles, AlertTriangle, ShieldCheck } from 'lucide-react'
+import { FileText, Loader2, Sparkles, AlertTriangle, ShieldCheck, FlaskConical } from 'lucide-react'
 import { useSubmitIncident } from '../api/queries'
+
+/* ── Demo scenarios for SIH presentation ──────────────────────────────── */
+const DEMO_SCENARIOS = [
+  {
+    label: 'Confined Space',
+    risk: 'CRITICAL',
+    narrative: 'Worker entered a confined vessel at Rig-07 Duliajan to perform internal cleaning. Atmospheric testing was not completed prior to entry. The standby attendant was absent from the entry point. Gas detector was not available at the work site. The entry permit had expired the previous day and was not renewed. Approximately 15 minutes after entry, the worker reported dizziness and difficulty breathing. The rescue team was not immediately available as they had not been briefed on the confined space entry operation.',
+  },
+  {
+    label: 'Work at Height',
+    risk: 'HIGH',
+    narrative: 'During routine maintenance on the derrick platform at Rig-12 Moran, a rigger was working at 18 meters height to replace a crown block sheave. The worker was not wearing a safety harness and there was no safety net or fall arrest system in place. The scaffold platform had missing guardrails on the east side. A toolbox talk was not conducted before the task. Wind speed was above safe working limits but operations continued.',
+  },
+  {
+    label: 'Energy Isolation',
+    risk: 'HIGH',
+    narrative: 'An electrician was replacing a motor starter at Refinery Block B when the circuit was accidentally energized by another crew member. Lockout tagout procedures were not followed. The isolation point was not verified before work commenced. No energy isolation tags were placed on the breaker. The permit to work did not specify the isolation requirements. The worker received an electrical shock and sustained burns to both hands.',
+  },
+  {
+    label: 'Line of Fire',
+    risk: 'MEDIUM',
+    narrative: 'While a crane was lifting pipe sections at Pipeline Sector 4, a helper walked under the suspended load to retrieve a sling. No barricade was established around the lift zone. The signal person did not halt the operation when personnel entered the exclusion zone. The rigging plan was not communicated to all workers in the area.',
+  },
+  {
+    label: 'Low-Risk Observation',
+    risk: 'LOW',
+    narrative: 'During a routine safety walkthrough at Central Warehouse, it was observed that several fire extinguisher inspection tags were overdue by two weeks. The warehouse housekeeping was generally good with clearly marked walkways. One emergency exit sign light was not functioning. All workers were wearing appropriate PPE.',
+  },
+]
 
 const SITES = [
   "Rig-07 Duliajan",
@@ -85,6 +114,39 @@ export default function ReportIncident() {
               Type or paste a raw safety observation narrative. The AI Intelligence pipeline will automatically clean the text, score its Serious Injury &amp; Fatality (SIF) potential, tag Life Saving Rule violations, extract entities, construct its Fatality Twin counterfactual, and generate corrective and preventive actions.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* Demo Scenarios */}
+      <section className="card overflow-hidden bg-gradient-to-br from-surface to-surface-2/10">
+        <div className="card-header">
+          <div className="flex items-center gap-2">
+            <FlaskConical size={15} className="text-brand-500" />
+            <h3 className="card-title text-fg font-bold text-sm">Demo Scenarios</h3>
+            <span className="rounded-full bg-brand-500/10 px-2 py-0.5 text-2xs font-bold text-brand-400">SIH Demo</span>
+          </div>
+          <p className="text-xs text-fg-3">Select a scenario to populate the narrative. Submitted through the real AI pipeline.</p>
+        </div>
+        <div className="flex flex-wrap gap-2 p-4">
+          {DEMO_SCENARIOS.map((s) => {
+            const riskColors = {
+              CRITICAL: 'border-red-500/30 bg-red-500/5 text-red-400 hover:bg-red-500/10',
+              HIGH: 'border-orange-500/30 bg-orange-500/5 text-orange-400 hover:bg-orange-500/10',
+              MEDIUM: 'border-yellow-500/30 bg-yellow-500/5 text-yellow-400 hover:bg-yellow-500/10',
+              LOW: 'border-green-500/30 bg-green-500/5 text-green-400 hover:bg-green-500/10',
+            }
+            return (
+              <button
+                key={s.label}
+                type="button"
+                onClick={() => setNarrative(s.narrative)}
+                className={`rounded-lg border px-3 py-2 text-xs font-bold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${riskColors[s.risk] || riskColors.MEDIUM}`}
+              >
+                {s.label}
+                <span className="ml-1.5 text-2xs opacity-70">{s.risk}</span>
+              </button>
+            )
+          })}
         </div>
       </section>
 

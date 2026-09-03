@@ -22,8 +22,8 @@ from app.routers import (  # noqa: E402
 )
 
 app = FastAPI(
-    title="SIF Sentinel AI",
-    description="AI-Powered Safety Intelligence Platform for SIF Prevention — Smart India Hackathon 2026",
+    title="KAVACH AI",
+    description="Knowledge-driven AI for Vigilance and Critical Hazard Prevention — Smart India Hackathon 2026",
     version="1.0.0",
 )
 
@@ -55,4 +55,4 @@ def warm_up():
     get_store()
     get_engine()
     status = "connected" if mongo_available() else "unavailable (memory-only mode)"
-    print(f"SIF Sentinel AI backend ready. MongoDB: {status}")
+    print(f"KAVACH AI backend ready. MongoDB: {status}")
