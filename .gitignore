@@ -1,7 +1,9 @@
-# Generated ML artifacts (regenerate via the commands in README.md) --
-# keep only the small, human-readable result summaries checked in as
-# evidence of what was actually measured.
-ml/artifacts/*
+# Keep ML artifacts in git for fast cloud deployment
+!ml/artifacts/*.pkl
+!ml/artifacts/*.joblib
+!ml/artifacts/*.faiss*
+!ml/artifacts/*.npy
+!ml/artifacts/*.jsonl
 !ml/artifacts/.gitkeep
 !ml/artifacts/*_metrics.json
 !ml/artifacts/aggregates.json
