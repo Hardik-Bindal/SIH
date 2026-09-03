@@ -2,7 +2,7 @@
 # demo_start.sh - Zero-friction startup script for SIH Round 2 demo
 
 echo "=========================================================="
-echo " Starting SIF Sentinel AI - Demo Mode"
+echo " Starting KAVACH AI - Demo Mode"
 echo "=========================================================="
 
 # 1. Kill any existing processes on ports 8000 and 5173
@@ -33,7 +33,7 @@ npm run dev -- --host &
 FRONTEND_PID=$!
 
 echo "=========================================================="
-echo " SIF Sentinel AI is LIVE!"
+echo " KAVACH AI is LIVE!"
 echo " Backend: http://localhost:8000"
 echo " Frontend: http://localhost:5173"
 echo " Press Ctrl+C to stop all services."

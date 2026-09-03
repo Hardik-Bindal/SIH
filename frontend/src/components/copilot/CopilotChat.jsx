@@ -7,12 +7,12 @@ import StructuredResultView from './StructuredResultView'
 import SafetyMemoryPanel from '../memory/SafetyMemoryPanel'
 
 const SUGGESTED_PROMPTS = [
-  'Show all confined space incidents during monsoon having SIF > 90 where gas detector failed.',
-  'Show all work at height incidents during monsoon having SIF > 90',
-  'Has this happened before? Worker touched energized cable while replacing a junction box.',
-  'critical lifting incidents at Refinery Block B',
-  'Which site is most dangerous this month, and why?',
-  'What barrier keeps failing across our electrical maintenance work?',
+  'Why is this incident high risk?',
+  'Which Life Saving Rule applies here?',
+  'What controls failed in this incident?',
+  'Show similar fatal cases from the knowledge base.',
+  'What CAPA should be prioritized?',
+  'Has this type of incident happened before?',
 ]
 
 function Avatar({ icon: Icon, tone = 'brand' }) {
@@ -144,7 +144,7 @@ export default function CopilotChat({ variant = 'full' }) {
               <Sparkles size={16} className="relative text-white" aria-hidden="true" />
             </span>
             <div>
-              <h2 className="card-title text-fg font-bold tracking-tight">AI Safety Copilot</h2>
+              <h2 className="card-title text-fg font-bold tracking-tight">Kavach AI Assistant</h2>
               <p className="text-xs text-fg-3">Grounded answers, cited to real reports. No citation, no answer.</p>
             </div>
           </div>
@@ -221,7 +221,7 @@ export default function CopilotChat({ variant = 'full' }) {
             id={inputId}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask the Safety Copilot…"
+            placeholder="Ask Kavach AI…"
             className="input pr-10"
           />
           <kbd className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none hidden items-center gap-0.5 rounded border border-line-2 bg-surface-2 px-1.5 font-mono text-[9px] font-medium text-fg-3 shadow-sm sm:flex">

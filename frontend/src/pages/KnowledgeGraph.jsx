@@ -1,6 +1,6 @@
-import { useMemo, useRef, useState } from 'react'
-import CytoscapeComponent from 'react-cytoscapejs'
-import { Waypoints, MousePointerClick } from 'lucide-react'
+import { useMemo, useRef, useState, useCallback, useEffect } from 'react'
+import ForceGraph3D from 'react-force-graph-3d'
+import { Waypoints, MousePointerClick, RotateCcw, Search } from 'lucide-react'
 import { useGraph } from '../api/queries'
 import AsyncSection from '../components/common/AsyncSection'
 import { SkeletonBlock } from '../components/common/Skeleton'
@@ -16,6 +16,7 @@ const KIND_COLORS = {
   outcome: '#dc2626',
   department: '#16a34a',
   report: '#94a3b8',
+  control: '#0ea5e9',
 }
 
 const KIND_LEGEND = [
@@ -34,81 +35,165 @@ function colorForKind(kind) {
   return KIND_COLORS[String(kind || '').toLowerCase()] || '#94a3b8'
 }
 
+/* ── 3D Graph Canvas ──────────────────────────────────────────────────── */
+
+function Graph3DCanvas({ graph, onNodeClick, selectedNodeId }) {
+  const fgRef = useRef()
+  const containerRef = useRef()
+  const [dimensions, setDimensions] = useState({ width: 800, height: 560 })
+  const [searchTerm, setSearchTerm] = useState('')
+
+  // Responsive sizing
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => {
+      setDimensions({
+        width: entry.contentRect.width || 800,
+        height: 560,
+      })
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const barrierIds = useMemo(
+    () => new Set((graph.top_barrier_centrality || []).map((b) => b.node)),
+    [graph.top_barrier_centrality]
+  )
+
+  // Build data for force-graph
+  const graphData = useMemo(() => {
+    const nodes = graph.nodes.map((n) => ({
+      id: n.data.id,
+      label: n.data.label,
+      kind: n.data.kind,
+      isTopBarrier: barrierIds.has(n.data.id),
+      val: barrierIds.has(n.data.id) ? 6 : n.data.kind === 'report' ? 1 : 3,
+    }))
+
+    const nodeIds = new Set(nodes.map(n => n.id))
+    const edges = (graph.edges || [])
+      .filter(e => {
+        const src = e.data?.source
+        const tgt = e.data?.target
+        return src && tgt && nodeIds.has(src) && nodeIds.has(tgt)
+      })
+      .map(e => ({
+        source: e.data.source,
+        target: e.data.target,
+      }))
+
+    return { nodes, links: edges }
+  }, [graph, barrierIds])
+
+  // Filter by search
+  const filteredData = useMemo(() => {
+    if (!searchTerm.trim()) return graphData
+    const term = searchTerm.toLowerCase()
+    const matchingNodeIds = new Set(
+      graphData.nodes
+        .filter(n => n.label?.toLowerCase().includes(term) || n.kind?.toLowerCase().includes(term))
+        .map(n => n.id)
+    )
+    // Include neighbors
+    graphData.links.forEach(l => {
+      const src = typeof l.source === 'object' ? l.source.id : l.source
+      const tgt = typeof l.target === 'object' ? l.target.id : l.target
+      if (matchingNodeIds.has(src)) matchingNodeIds.add(tgt)
+      if (matchingNodeIds.has(tgt)) matchingNodeIds.add(src)
+    })
+    return {
+      nodes: graphData.nodes.filter(n => matchingNodeIds.has(n.id)),
+      links: graphData.links.filter(l => {
+        const src = typeof l.source === 'object' ? l.source.id : l.source
+        const tgt = typeof l.target === 'object' ? l.target.id : l.target
+        return matchingNodeIds.has(src) && matchingNodeIds.has(tgt)
+      }),
+    }
+  }, [graphData, searchTerm])
+
+  const handleResetCamera = useCallback(() => {
+    fgRef.current?.cameraPosition({ x: 0, y: 0, z: 400 }, { x: 0, y: 0, z: 0 }, 800)
+  }, [])
+
+  const handleNodeClick = useCallback((node) => {
+    if (onNodeClick) onNodeClick(node)
+    // Zoom to node
+    const distance = 120
+    const distRatio = 1 + distance / Math.hypot(node.x, node.y, node.z)
+    fgRef.current?.cameraPosition(
+      { x: node.x * distRatio, y: node.y * distRatio, z: node.z * distRatio },
+      node,
+      800
+    )
+  }, [onNodeClick])
+
+  return (
+    <div ref={containerRef} className="relative w-full" style={{ height: 560 }}>
+      {/* Controls bar */}
+      <div className="absolute top-3 left-3 right-3 z-10 flex items-center gap-2">
+        <div className="relative flex-1 max-w-xs">
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-3" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search nodes..."
+            className="h-8 w-full rounded-lg border border-line bg-surface/90 pl-8 pr-3 text-xs text-fg backdrop-blur-sm placeholder:text-fg-3 focus:border-brand-500 focus:outline-none"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={handleResetCamera}
+          className="flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface/90 px-3 text-xs font-bold text-fg-2 backdrop-blur-sm transition-colors hover:bg-surface-2"
+          title="Reset camera"
+        >
+          <RotateCcw size={13} />
+          Reset
+        </button>
+      </div>
+
+      <ForceGraph3D
+        ref={fgRef}
+        graphData={filteredData}
+        width={dimensions.width}
+        height={dimensions.height}
+        backgroundColor="rgba(0,0,0,0)"
+        nodeLabel={(node) => `<div style="background:#1e293b;color:#e2e8f0;padding:6px 10px;border-radius:8px;font-size:11px;font-weight:600;border:1px solid #334155;box-shadow:0 4px 12px rgba(0,0,0,0.3)"><span style="color:${colorForKind(node.kind)};text-transform:uppercase;font-size:9px;letter-spacing:0.05em">${node.kind}</span><br/>${node.label}</div>`}
+        nodeColor={(node) => {
+          if (selectedNodeId && node.id === selectedNodeId) return '#ef4444'
+          return colorForKind(node.kind)
+        }}
+        nodeOpacity={0.92}
+        nodeResolution={12}
+        linkColor={() => 'rgba(100,130,170,0.2)'}
+        linkWidth={0.5}
+        linkDirectionalArrowLength={3}
+        linkDirectionalArrowRelPos={1}
+        onNodeClick={handleNodeClick}
+        enableNodeDrag
+        enableNavigationControls
+        showNavInfo={false}
+      />
+    </div>
+  )
+}
+
+/* ── Main page ────────────────────────────────────────────────────────── */
+
 export default function KnowledgeGraph() {
   const [limit, setLimit] = useState(150)
   const graphQuery = useGraph({ limit })
   const [selectedNode, setSelectedNode] = useState(null)
-  const cyRef = useRef(null)
 
-  // StyleSheet is recalculated dynamically to match theme changes
-  const stylesheet = useMemo(() => {
-    const isDark = document.documentElement.classList.contains('dark')
-    const labelColor = isDark ? '#cbd5e1' : '#475569'
-    const boldLabelColor = isDark ? '#ffffff' : '#0f1e33'
-    const edgeColor = isDark ? '#334155' : '#cbd5e1'
-
-    return [
-      {
-        selector: 'node',
-        style: {
-          'background-color': (n) => colorForKind(n.data('kind')),
-          label: 'data(label)',
-          'font-size': 9,
-          'font-family': 'Inter, ui-sans-serif, system-ui, sans-serif',
-          color: labelColor,
-          'text-valign': 'bottom',
-          'text-margin-y': 5,
-          width: 20,
-          height: 20,
-          'border-width': 2,
-          'border-color': isDark ? '#0f1420' : '#ffffff',
-          'border-opacity': 1,
-        },
-      },
-      {
-        selector: 'node[kind = "report"]',
-        style: {
-          width: 12,
-          height: 12,
-          'font-size': 7,
-          color: labelColor,
-          'text-margin-y': 3,
-        },
-      },
-      {
-        selector: 'node.top-barrier',
-        style: {
-          width: 36,
-          height: 36,
-          'border-width': 4,
-          'border-color': '#009ef0',
-          'border-opacity': 0.85,
-          'font-weight': 700,
-          'font-size': 11,
-          color: boldLabelColor,
-        },
-      },
-      {
-        selector: 'node.selected',
-        style: {
-          'border-width': 4,
-          'border-color': '#dc2626',
-          'border-opacity': 1,
-        },
-      },
-      {
-        selector: 'edge',
-        style: {
-          width: 1.1,
-          'line-color': edgeColor,
-          'target-arrow-color': edgeColor,
-          'target-arrow-shape': 'triangle',
-          'arrow-scale': 0.6,
-          'curve-style': 'bezier',
-          opacity: 0.55,
-        },
-      },
-    ]
+  const handleNodeClick = useCallback((node) => {
+    setSelectedNode({
+      id: node.id,
+      label: node.label,
+      kind: node.kind,
+      isTopBarrier: node.isTopBarrier,
+    })
   }, [])
 
   return (
@@ -122,8 +207,8 @@ export default function KnowledgeGraph() {
             <div className="min-w-0">
               <h2 className="font-display text-base font-bold tracking-tight text-fg">Safety Knowledge Graph</h2>
               <p className="mt-0.5 max-w-3xl text-xs leading-relaxed text-fg-2 font-medium">
-                Site, activity, hazard, barrier, root cause and outcome relationships. Ringed nodes have the highest
-                barrier betweenness centrality — fixing that control would break the most incident pathways.
+                Interactive 3D visualization of safety relationships. Rotate, zoom, and click nodes to explore
+                site → activity → hazard → barrier → outcome pathways.
               </p>
             </div>
           </div>
@@ -147,7 +232,7 @@ export default function KnowledgeGraph() {
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line pt-3.5">
-          <span className="eyebrow text-fg-3 font-bold">Node legends</span>
+          <span className="eyebrow text-fg-3 font-bold">Node legend</span>
           {KIND_LEGEND.map(([kind, label]) => (
             <span key={kind} className="flex items-center gap-1.5 text-xs text-fg-2 font-semibold">
               <span
@@ -162,7 +247,7 @@ export default function KnowledgeGraph() {
       </section>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <section className="card overflow-hidden">
+        <section className="card overflow-hidden" style={{ background: '#0a0f1a' }}>
           <AsyncSection
             query={graphQuery}
             componentName="Knowledge graph canvas"
@@ -174,48 +259,13 @@ export default function KnowledgeGraph() {
               </div>
             }
           >
-            {(graph) => {
-              const barrierIds = new Set((graph.top_barrier_centrality || []).map((b) => b.node))
-              const elements = [
-                ...graph.nodes.map((n) => ({
-                  data: n.data,
-                  classes: barrierIds.has(n.data.id) ? 'top-barrier' : '',
-                })),
-                ...graph.edges,
-              ]
-              return (
-                <CytoscapeComponent
-                  elements={CytoscapeComponent.normalizeElements(elements)}
-                  style={{ width: '100%', height: '560px', background: 'transparent' }}
-                  stylesheet={stylesheet}
-                  layout={{
-                    name: 'cose',
-                    animate: false,
-                    padding: 36,
-                    nodeRepulsion: 14000,
-                    idealEdgeLength: 80,
-                    nodeOverlap: 24,
-                    componentSpacing: 90,
-                  }}
-                  cy={(cy) => {
-                    cyRef.current = cy
-                    cy.off('tap', 'node')
-                    cy.on('tap', 'node', (evt) => {
-                      cy.$('node.selected').removeClass('selected')
-                      const node = evt.target
-                      node.addClass('selected')
-                      setSelectedNode({ ...node.data(), centrality: (graph.top_barrier_centrality || []).find((b) => b.node === node.id())?.centrality })
-                    })
-                    cy.on('tap', (evt) => {
-                      if (evt.target === cy) {
-                        cy.$('node.selected').removeClass('selected')
-                        setSelectedNode(null)
-                      }
-                    })
-                  }}
-                />
-              )
-            }}
+            {(graph) => (
+              <Graph3DCanvas
+                graph={graph}
+                onNodeClick={handleNodeClick}
+                selectedNodeId={selectedNode?.id}
+              />
+            )}
           </AsyncSection>
         </section>
 
@@ -229,7 +279,7 @@ export default function KnowledgeGraph() {
                 <div className="flex flex-col items-center gap-2 py-4 text-center">
                   <MousePointerClick size={22} className="text-fg-3 animate-pulse-soft" aria-hidden="true" />
                   <p className="text-xs leading-relaxed text-fg-3 font-semibold">
-                    Click a node on the canvas to inspect its kind, id and centrality.
+                    Click a node on the 3D canvas to inspect its kind, id and connections.
                   </p>
                 </div>
               ) : (
@@ -256,10 +306,9 @@ export default function KnowledgeGraph() {
                       </dd>
                     </div>
                   </dl>
-                  {selectedNode.centrality !== undefined && (
+                  {selectedNode.isTopBarrier && (
                     <p className="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-xs font-bold text-brand-700 dark:border-brand-500/20 dark:bg-brand-500/10 dark:text-brand-300">
-                      Top barrier — centrality{' '}
-                      <span className="tabular-nums font-mono text-fg">{selectedNode.centrality.toFixed(3)}</span>
+                      High betweenness centrality — critical control point
                     </p>
                   )}
                 </div>

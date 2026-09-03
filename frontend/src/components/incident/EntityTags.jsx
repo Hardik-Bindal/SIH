@@ -5,6 +5,7 @@ const GROUP_STYLES = {
   equipment: 'bg-brand-50 text-brand-700 ring-brand-200',
   activity: 'bg-surface-2 text-fg-2 ring-line',
   condition: 'bg-risk-medium-bg text-risk-medium ring-risk-medium-border',
+  control: 'bg-sky-50 text-sky-700 ring-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:ring-sky-500/20',
 }
 
 const GROUP_ICONS = {
@@ -12,6 +13,7 @@ const GROUP_ICONS = {
   equipment: '⚙',
   activity: '⚡',
   condition: '◈',
+  control: '🛡',
 }
 
 export default function EntityTags({ entities }) {

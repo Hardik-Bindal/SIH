@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-seed_mongo.py — Sample MongoDB seed script for SIF Sentinel AI.
+seed_mongo.py — Sample MongoDB seed script for KAVACH AI.
 
 What it does:
   1. Connects to MongoDB Atlas using MONGODB_URI from backend/.env

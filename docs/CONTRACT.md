@@ -1,4 +1,4 @@
-# API Contract — SIF Sentinel AI Backend
+# API Contract — KAVACH AI Backend
 
 Source of truth for both the FastAPI backend and the React frontend so they
 can be built in parallel (SRS §19.1: "Interface runs parallel from day 5

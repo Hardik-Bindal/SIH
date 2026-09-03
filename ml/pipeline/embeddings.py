@@ -1,5 +1,5 @@
 """
-Narrative encoder + vector index for SIF Sentinel AI.
+Narrative encoder + vector index for KAVACH AI.
 
 SRS 7.2 specifies Sentence-Transformers' all-MiniLM-L6-v2 for 384-dim
 narrative embeddings, served through MongoDB Atlas Vector Search (SRS 9.3).

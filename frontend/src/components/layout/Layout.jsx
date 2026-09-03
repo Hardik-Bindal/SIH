@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
+import FloatingAssistant from '../copilot/FloatingAssistant'
 
 const TITLES = {
   '/dashboard': 'Executive Dashboard',
@@ -12,17 +13,18 @@ const TITLES = {
   '/hazards': 'Hazard Analytics',
   '/lsr': 'Life Saving Rule Dashboard',
   '/recommendations': 'AI Recommendations',
-  '/copilot': 'AI Safety Copilot',
+  '/copilot': 'Kavach AI Assistant',
   '/graph': 'Knowledge Graph',
+  '/report': 'Report Incident',
 }
 
 function titleFor(pathname) {
   if (TITLES[pathname]) return TITLES[pathname]
   if (pathname.startsWith('/incidents/')) return 'Incident Deep Analysis'
-  return 'SIF Sentinel AI'
+  return 'Kavach AI'
 }
 
-const COLLAPSE_KEY = 'sif.sidebar.collapsed'
+const COLLAPSE_KEY = 'kavach.sidebar.collapsed'
 
 export default function Layout() {
   const [navOpen, setNavOpen] = useState(false)
@@ -46,7 +48,7 @@ export default function Layout() {
   }
 
   return (
-    <div className="relative flex min-h-screen bg-bg">
+    <div className="flex h-screen overflow-hidden bg-bg">
       {/* Ambient background mesh — subtle premium touch */}
       <div
         aria-hidden="true"
@@ -66,7 +68,7 @@ export default function Layout() {
         collapsed={collapsed}
         onToggleCollapse={toggleCollapse}
       />
-      <div className="relative flex min-w-0 flex-1 flex-col">
+      <div className="relative flex min-w-0 flex-1 flex-col overflow-y-auto">
         <Topbar onMenuClick={() => setNavOpen(true)} title={titleFor(location.pathname)} />
         <main id="main-content" tabIndex={-1} className="flex-1 p-4 lg:p-6 xl:p-8">
           <div className="animate-fade-in">
@@ -74,6 +76,7 @@ export default function Layout() {
           </div>
         </main>
       </div>
+      <FloatingAssistant />
     </div>
   )
 }

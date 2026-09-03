@@ -229,7 +229,13 @@ export default function IncidentExplorer() {
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                           <span className="font-mono text-xs text-fg-3 font-semibold">{r.report_id}</span>
-                          <span className="eyebrow">{r.source_type}</span>
+                          {r.report_id?.startsWith('LIVE') ? (
+                            <span className="inline-flex items-center gap-0.5 rounded-full bg-green-500/10 px-1.5 py-0.5 text-2xs font-bold text-green-400 ring-1 ring-green-500/20">Live</span>
+                          ) : r.source_type === 'FATALITY' ? (
+                            <span className="inline-flex items-center gap-0.5 rounded-full bg-red-500/10 px-1.5 py-0.5 text-2xs font-bold text-red-400 ring-1 ring-red-500/20">Fatality</span>
+                          ) : (
+                            <span className="inline-flex items-center gap-0.5 rounded-full bg-blue-500/10 px-1.5 py-0.5 text-2xs font-bold text-blue-400 ring-1 ring-blue-500/20">OSHA</span>
+                          )}
                           {r.site && <span className="text-xs text-fg-3">· {r.site}</span>}
                           {r.area && <span className="text-xs text-fg-3">· {r.area}</span>}
                         </div>

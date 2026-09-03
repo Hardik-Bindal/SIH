@@ -139,8 +139,8 @@ export default function Landing() {
               <ShieldHalf size={20} className="relative text-white" aria-hidden="true" />
             </div>
             <div className="leading-tight">
-              <p className="font-display text-sm font-bold text-fg">SIF Sentinel AI</p>
-              <p className="text-2xs text-fg-3">Oil India Limited</p>
+              <p className="font-display text-sm font-bold text-fg">Kavach AI</p>
+              <p className="text-2xs text-fg-3">Safety Intelligence Platform</p>
             </div>
           </div>
 
@@ -652,7 +652,7 @@ export default function Landing() {
                 <ArrowRight size={16} aria-hidden="true" />
               </Link>
               <a
-                href="https://github.com/Mayankjangid0604/sif-sentinel-ai"
+                href="https://github.com/Hardik-Bindal/SIH"
                 target="_blank"
                 rel="noreferrer"
                 className="btn-secondary px-6 py-3 shadow-md"
@@ -671,7 +671,7 @@ export default function Landing() {
           <div className="flex items-center gap-2.5">
             <ShieldHalf size={18} className="text-brand-600" aria-hidden="true" />
             <p className="text-sm text-fg-2">
-              <span className="font-bold text-fg">SIF Sentinel AI</span> · Team The Last Commit
+              <span className="font-bold text-fg">Kavach AI</span> · Team The Last Commit
             </p>
           </div>
           <p className="text-center text-xs text-fg-3 md:text-right font-medium">

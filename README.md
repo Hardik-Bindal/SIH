@@ -1,6 +1,6 @@
-# SIF Sentinel AI
+# KAVACH AI
 
-**AI-Powered Safety Intelligence Platform for Serious Injury & Fatality (SIF) Prevention**
+**Knowledge-driven AI for Vigilance and Critical Hazard Prevention**
 Smart India Hackathon 2026 · Team The Last Commit · Problem domain: Industrial Safety (Oil India Limited)
 
 Turns unstructured safety narratives into structured, scored, explainable, and
@@ -10,7 +10,7 @@ knowledge base of confirmed fatalities, a "Fatality Twin" escalation
 projection, precedent-grounded CAPA generation, and a citation-enforced
 Safety Copilot — built end-to-end on two real OSHA datasets.
 
-Full requirements: [`docs/SIF_Sentinel_AI_SRS_v2.docx`](docs/SIF_Sentinel_AI_SRS_v2.docx)
+Full requirements: [`docs/SIF_Sentinel_AI_SRS_v2.docx`](docs/SIF_Sentinel_AI_SRS_v2.docx) (original SRS title retained)
 (plain-text extraction: `docs/SRS_extracted.txt`). API contract:
 [`docs/CONTRACT.md`](docs/CONTRACT.md). **Read
 [`docs/DEVIATIONS.md`](docs/DEVIATIONS.md) first** — this sandbox has no

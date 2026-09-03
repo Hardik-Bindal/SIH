@@ -2,7 +2,7 @@
 // Kept dead simple: no context, just a hook that reads/writes the class
 // on <html> so the first paint uses the correct theme.
 
-const STORAGE_KEY = 'sif.theme'
+const STORAGE_KEY = 'kavach.theme'
 
 export function getInitialTheme() {
   try {
