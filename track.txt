@@ -1633,7 +1633,7 @@ DATE: 2026-09-02 (Kavach AI P0/P1 Overhaul)
     · Updated index.html, theme.js, Layout.jsx, Landing.jsx, CopilotChat.jsx, and localStorage keys to match new branding.
     · Completely rewrote Sidebar.jsx into 4 grouped sections (Dashboard, Safety Intelligence, Incidents, Knowledge) with hover-flyout submenus and active route highlighting.
     · Created FloatingAssistant.jsx: A persistent bottom-right floating button across the app that expands to the full CopilotChat, replacing inline Copilot sidebars.
-    · Completely replaced geospatial heatmap in HazardAnalytics.jsx with an analytical dashboard (KPIs, risk distribution pie, LSR frequency bar, forecast trend, tables).
+    · Complete visual upgrade of HazardAnalytics.jsx: Added an interactive Leaflet Geographic Risk Map as the hero element, improved KPI layout, and polished risk distribution/LSR charts to match KAVACH AI design system.
 
   - NER PIPELINE ENHANCEMENTS (ml/pipeline/ner.py):
     · Added CONTROLS gazetteer (30+ safety controls like "atmospheric testing", "gas monitoring", "entry permit").
