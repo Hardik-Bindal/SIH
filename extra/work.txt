@@ -1,0 +1,1893 @@
+================================================================================
+                       KAVACH AI — COMPLETE PROJECT DOCUMENTATION
+        Knowledge-driven AI for Vigilance and Critical Hazard Prevention
+                  Smart India Hackathon 2026 · Team The Last Commit
+                    Problem Domain: Industrial Safety (Oil India Limited)
+================================================================================
+
+TABLE OF CONTENTS
+-----------------
+1.  PROJECT OVERVIEW & VISION
+2.  PROBLEM STATEMENT & WHY THIS MATTERS
+3.  COMPLETE PROJECT DIRECTORY STRUCTURE
+4.  DATA LAYER — RAW DATASETS
+5.  ML PIPELINE — FULL EXPLANATION OF EVERY FILE
+    5.1  ETL Pipeline (ml/pipeline/etl.py)
+    5.2  Named Entity Recognition (ml/pipeline/ner.py)
+    5.3  Embeddings & Vector Index (ml/pipeline/embeddings.py)
+    5.4  Inference Engine (ml/pipeline/inference.py)
+6.  ML MODELS — FULL EXPLANATION OF EVERY FILE
+    6.1  SIF Classifier Training (ml/models/train_sif_classifier.py)
+    6.2  LSR Mapper Training (ml/models/train_lsr_mapper.py)
+    6.3  LSR Rules / Weak Labelling (ml/models/lsr_rules.py)
+    6.4  Risk Fusion (ml/models/risk_fusion.py)
+    6.5  Fatality Twin (ml/models/fatality_twin.py)
+    6.6  Recommendations / CAPA (ml/models/recommendations.py)
+    6.7  Forecaster (ml/models/forecaster.py)
+    6.8  Knowledge Graph (ml/models/knowledge_graph.py)
+    6.9  Pattern Clusters / Safety Memory (ml/models/pattern_clusters.py)
+    6.10 Build Analytics Artifacts (ml/models/build_analytics_artifacts.py)
+7.  ML ARTIFACTS — WHAT GETS GENERATED
+8.  BACKEND — FULL EXPLANATION OF EVERY FILE
+    8.1  Application Entry Point (backend/app/main.py)
+    8.2  Database Module (backend/app/database.py)
+    8.3  Hybrid Data Store (backend/app/store.py)
+    8.4  Pydantic Schemas (backend/app/schemas.py)
+    8.5  All API Routers (backend/app/routers/*)
+    8.6  All Backend Services (backend/app/services/*)
+9.  FRONTEND — FULL EXPLANATION OF EVERY FILE
+    9.1  Entry Point & App Router (main.jsx, App.jsx)
+    9.2  API Layer (api/client.js, endpoints.js, queries.js)
+    9.3  State Management (store/filterStore.js)
+    9.4  Utility Libraries (lib/*)
+    9.5  Layout Components (components/layout/*)
+    9.6  Common Reusable Components (components/common/*)
+    9.7  Incident Components (components/incident/*)
+    9.8  Copilot Components (components/copilot/*)
+    9.9  Diagram Components (components/diagrams/*)
+    9.10 Memory Components (components/memory/*)
+    9.11 All Pages — Detailed Explanation (pages/*)
+10. COMPLETE DATA FLOW & WORKFLOW
+11. API CONTRACT — EVERY ENDPOINT
+12. DOCKER & DEPLOYMENT
+13. CONFIGURATION FILES
+14. TWO FLAGSHIP DIFFERENTIATORS
+15. HOW TO RUN THE PROJECT (STEP BY STEP)
+16. TECHNOLOGY STACK SUMMARY
+
+
+================================================================================
+1. PROJECT OVERVIEW & VISION
+================================================================================
+
+KAVACH AI (Knowledge-driven AI for Vigilance and Critical Hazard Prevention) is
+an end-to-end AI-powered industrial safety intelligence platform built for the
+Smart India Hackathon 2026. It was developed by Team "The Last Commit" for the
+Oil India Limited problem domain.
+
+THE CORE IDEA:
+Every day, safety incidents are reported as free-text narratives in industrial
+organisations. These narratives are reviewed in isolation — the fourth
+occurrence of the same hazard pattern is investigated as if it were the first.
+Nobody connects the dots across thousands of past reports. KAVACH AI solves
+this by:
+
+1. Taking unstructured safety narratives (plain English text describing what
+   happened) and automatically turning them into STRUCTURED, SCORED,
+   EXPLAINABLE, and ACTIONABLE intelligence.
+
+2. Every single report is automatically:
+   - Scored for SIF (Serious Injury or Fatality) probability
+   - Mapped to Life Saving Rules (IOGP Report 459)
+   - Enriched with extracted hazards, equipment, activities, conditions
+   - Risk-banded (LOW / MEDIUM / HIGH / CRITICAL)
+   - Compared against 16,249 historical records for precedent
+   - Checked for barrier failures (safety controls that failed)
+   - Given a "Fatality Twin" escalation projection
+   - Given precedent-grounded CAPA (Corrective and Preventive Actions)
+   - Presented with explainability (why the AI scored it this way)
+
+3. The system provides a Safety Copilot that answers natural-language
+   questions with citations to real reports — never fabricates answers.
+
+THE TWO REAL DATASETS:
+- osha_incidents.csv: 4,847 mixed-severity incident narratives from OSHA
+- osha_fatalities.csv: 14,914 confirmed fatality narratives from OSHA
+Combined: 16,249+ real records (after deduplication)
+
+FULL SRS REFERENCE: docs/SIF_Sentinel_AI_SRS_v2.docx
+
+
+================================================================================
+2. PROBLEM STATEMENT & WHY THIS MATTERS
+================================================================================
+
+IN INDUSTRIAL SAFETY TODAY:
+- Incident reports are written as free text, reviewed manually, one at a time
+- The 4th occurrence of the same hazard is investigated as if it were the 1st
+- Nobody asks "has this happened before?" automatically
+- Nobody asks "what keeps happening across our entire operation?"
+- Filter-based dashboards cannot answer compound questions like:
+  "Show all confined space incidents during monsoon with SIF > 90 where gas
+   detector failed"
+- Safety bulletins are manually authored
+- No system connects a current near-miss to historical fatalities to show
+  "this exact scenario has killed someone before"
+
+WHAT KAVACH AI DOES DIFFERENTLY:
+1. SAFETY MEMORY: Every new report is AUTOMATICALLY compared against ALL
+   16,249 records the moment it is filed. Nobody has to think to ask "has
+   this happened before?" — it is answered proactively.
+
+2. STRUCTURED NATURAL-LANGUAGE QUERY: Instead of clicking through filter
+   dropdowns, an officer can type a complex question in plain English and
+   get an aggregate answer with citations.
+
+3. FATALITY TWIN: Shows that the current near-miss is on the same escalation
+   chain as a confirmed historical fatality.
+
+4. CITATION GUARDRAIL: The Copilot NEVER fabricates. If it cannot back its
+   answer with a real report_id from the corpus, it explicitly says so
+   (grounded: false).
+
+
+================================================================================
+3. COMPLETE PROJECT DIRECTORY STRUCTURE
+================================================================================
+
+sif-sentinel-ai-claude-sih-project-srs-vledrk/
+│
+├── .gitignore                    Git ignore rules
+├── README.md                     Main project readme
+├── docker-compose.yml            Docker orchestration (backend + frontend)
+├── KAVACH_FINAL_TEST_REPORT.md   Final test report
+├── project_explanation.md        Shorter project explanation
+├── track.txt                     Development tracking log
+│
+├── data/
+│   ├── raw/
+│   │   ├── osha_incidents.csv    (4,847 rows, 3.4 MB) — incident narratives
+│   │   └── osha_fatalities.csv   (14,914 rows, 1.8 MB) — fatality narratives
+│   └── processed/
+│       ├── .gitkeep
+│       ├── etl_summary.json      Summary stats from ETL run
+│       ├── incidents.parquet     Cleaned/enriched incident data (binary)
+│       ├── incidents.jsonl       Same, in JSON lines format
+│       ├── fatalities.parquet    Cleaned/enriched fatality data (binary)
+│       └── fatalities.jsonl      Same, in JSON lines format
+│
+├── ml/
+│   ├── pipeline/
+│   │   ├── etl.py               Data cleaning, enrichment, labelling, splitting
+│   │   ├── ner.py               Named entity recognition (gazetteer + rules)
+│   │   ├── embeddings.py        Narrative encoder (TF-IDF/SVD) + FAISS index
+│   │   └── inference.py         Live single-report analysis engine
+│   │
+│   ├── models/
+│   │   ├── train_sif_classifier.py   SIF probability classifier training
+│   │   ├── train_lsr_mapper.py       Life Saving Rule mapper training
+│   │   ├── lsr_rules.py              Keyword heuristics for weak labels
+│   │   ├── risk_fusion.py            Multi-signal risk band fusion
+│   │   ├── fatality_twin.py          Fatality escalation chain builder
+│   │   ├── recommendations.py        CAPA & toolbox talk generation
+│   │   ├── forecaster.py             7-day risk forecasting
+│   │   ├── knowledge_graph.py        Safety knowledge graph builder
+│   │   ├── pattern_clusters.py       Recurring pattern discovery (Safety Memory)
+│   │   └── build_analytics_artifacts.py  Batch scoring + dashboard precomputation
+│   │
+│   └── artifacts/                    ALL GENERATED ML outputs
+│       ├── encoder.pkl               Fitted TF-IDF + SVD encoder (~91 MB)
+│       ├── sif_classifier.joblib     Trained SIF classifier ensemble
+│       ├── sif_classifier_metrics.json  Test metrics for SIF classifier
+│       ├── lsr_mapper.joblib         Trained LSR mapper
+│       ├── lsr_mapper_metrics.json   Test metrics for LSR mapper
+│       ├── incident_vectors.npy      384-dim vectors for all incidents
+│       ├── fatality_vectors.npy      384-dim vectors for all fatalities
+│       ├── vector_index.faiss.ALL    FAISS index (all records)
+│       ├── vector_index.faiss.INCIDENT   FAISS index (incidents only)
+│       ├── vector_index.faiss.FATALITY   FAISS index (fatalities only)
+│       ├── vector_meta.json          Metadata for vector index entries
+│       ├── incidents_scored.jsonl    Every incident + full AI analysis (~49 MB)
+│       ├── aggregates.json           Pre-computed dashboard aggregates
+│       ├── forecast.json             7-day forecasts per category
+│       ├── graph.json                Knowledge graph (Cytoscape format)
+│       └── patterns.json             Recurring pattern clusters
+│
+├── backend/
+│   ├── .env                     Environment variables (not committed)
+│   ├── .env.example             Template for environment variables
+│   ├── Dockerfile               Docker build for backend
+│   ├── requirements.txt         Python dependencies
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py              FastAPI application entry point
+│   │   ├── database.py          MongoDB Atlas connection module
+│   │   ├── store.py             Hybrid in-memory + MongoDB data store
+│   │   ├── schemas.py           Pydantic request validation models
+│   │   ├── routers/
+│   │   │   ├── __init__.py
+│   │   │   ├── health.py        GET /api/v1/health
+│   │   │   ├── incidents.py     POST/GET incidents, similar incidents
+│   │   │   ├── search.py        POST semantic search
+│   │   │   ├── analytics.py     GET sites/areas/activities/departments/lsr/kpis/heatmap
+│   │   │   ├── forecast.py      GET 7-day forecasts
+│   │   │   ├── recommendations.py  POST recommendations for a report
+│   │   │   ├── copilot.py       POST copilot query + structured query
+│   │   │   ├── graph.py         GET knowledge graph
+│   │   │   ├── bulletin.py      POST safety bulletin PDF generation
+│   │   │   └── memory.py        GET/POST Safety Memory recall + patterns
+│   │   └── services/
+│   │       ├── __init__.py
+│   │       ├── copilot.py       AI Safety Copilot intent routing + citation guardrail
+│   │       ├── structured_query.py  Multi-constraint NL query parsing + execution
+│   │       ├── memory.py        Safety Memory recall logic
+│   │       └── bulletin.py      PDF bulletin generation (ReportLab)
+│   └── scripts/
+│       ├── __init__.py
+│       └── seed_mongo.py        MongoDB seeding script
+│
+├── frontend/
+│   ├── Dockerfile               Docker build for frontend
+│   ├── index.html               HTML entry point
+│   ├── package.json             Node.js dependencies and scripts
+│   ├── vite.config.js           Vite bundler configuration
+│   ├── tailwind.config.js       Tailwind CSS configuration
+│   ├── postcss.config.js        PostCSS configuration
+│   ├── src/
+│   │   ├── main.jsx             React entry point
+│   │   ├── App.jsx              React Router setup with lazy loading
+│   │   ├── index.css            Global CSS (17 KB — full design system)
+│   │   ├── api/
+│   │   │   ├── client.js        Axios HTTP client configuration
+│   │   │   ├── endpoints.js     API endpoint functions (1:1 with CONTRACT.md)
+│   │   │   └── queries.js       React Query hooks for data fetching
+│   │   ├── store/
+│   │   │   └── filterStore.js   Zustand global filter state
+│   │   ├── lib/
+│   │   │   ├── format.js        Formatting utilities (dates, numbers, percentages)
+│   │   │   ├── riskBands.js     Risk band visual tokens + CSS variable integration
+│   │   │   ├── theme.js         Dark/light theme management
+│   │   │   ├── patternSeverity.js  Pattern severity classification
+│   │   │   ├── memoryVerdicts.js   Safety Memory verdict styling
+│   │   │   └── generateIncidentPdf.js  Client-side PDF generation (jsPDF)
+│   │   ├── components/
+│   │   │   ├── layout/
+│   │   │   │   ├── Layout.jsx   Main layout wrapper (sidebar + topbar + content)
+│   │   │   │   ├── Sidebar.jsx  Navigation sidebar with collapsible sections
+│   │   │   │   └── Topbar.jsx   Top navigation bar with global filters
+│   │   │   ├── common/
+│   │   │   │   ├── AsyncSection.jsx   Loading/error/data wrapper
+│   │   │   │   ├── ChartKit.jsx       Recharts chart components
+│   │   │   │   ├── EmptyState.jsx     Empty data state display
+│   │   │   │   ├── ErrorState.jsx     Error display component
+│   │   │   │   ├── KpiCard.jsx        KPI metric card component
+│   │   │   │   ├── Pagination.jsx     Pagination controls
+│   │   │   │   ├── RiskBadge.jsx      Risk band badge (coloured pill)
+│   │   │   │   ├── SectionErrorBoundary.jsx  React error boundary
+│   │   │   │   ├── Skeleton.jsx       Loading skeleton animations
+│   │   │   │   └── SyntheticBadge.jsx Synthetic data disclosure badge
+│   │   │   ├── incident/
+│   │   │   │   ├── CapaPanel.jsx      CAPA (Corrective/Preventive Actions) panel
+│   │   │   │   ├── EntityTags.jsx     Extracted entity tag display
+│   │   │   │   ├── ExplanationPanel.jsx  AI explanation panel (token weights)
+│   │   │   │   ├── FatalityTwinChain.jsx Fatality Twin escalation chain visual
+│   │   │   │   ├── LsrMapping.jsx     Life Saving Rule mapping display
+│   │   │   │   └── RiskGauge.jsx      Risk score gauge visualisation
+│   │   │   ├── copilot/
+│   │   │   │   ├── CopilotChat.jsx    Chat interface for Safety Copilot
+│   │   │   │   ├── FloatingAssistant.jsx  Floating AI assistant button
+│   │   │   │   ├── StructuredQueryPanel.jsx  Multi-constraint query UI
+│   │   │   │   └── StructuredResultView.jsx  Structured query results display
+│   │   │   ├── diagrams/
+│   │   │   │   ├── PipelineFlow.jsx   ML pipeline flow diagram
+│   │   │   │   └── RiskFusionBar.jsx  Risk fusion component breakdown
+│   │   │   └── memory/
+│   │   │       ├── PatternCard.jsx    Recurring pattern card
+│   │   │       └── SafetyMemoryPanel.jsx  Safety Memory recall panel
+│   │   └── pages/
+│   │       ├── Landing.jsx            Public landing page (marketing/intro)
+│   │       ├── ExecutiveDashboard.jsx  Executive overview with KPIs + charts
+│   │       ├── IncidentExplorer.jsx   Browse/filter/search all incidents
+│   │       ├── IncidentDetail.jsx     Single incident deep-dive view
+│   │       ├── ReportIncident.jsx     Submit a new incident narrative
+│   │       ├── SafetyMemory.jsx       Safety Memory patterns + ad-hoc recall
+│   │       ├── SiteIntelligence.jsx   Site-level analytics + geospatial heatmap
+│   │       ├── AreaIntelligence.jsx   Area-level analytics
+│   │       ├── HazardAnalytics.jsx    Hazard/activity analytics + forecasting
+│   │       ├── LsrDashboard.jsx       Life Saving Rule analytics
+│   │       ├── Recommendations.jsx    CAPA viewer for any report
+│   │       ├── Copilot.jsx            AI Safety Copilot chat page
+│   │       └── KnowledgeGraph.jsx     Interactive knowledge graph visualisation
+│   └── public/
+│       └── vite.svg
+│
+├── docs/
+│   ├── SIF_Sentinel_AI_SRS_v2.docx   Full Software Requirements Specification
+│   ├── SRS_extracted.txt              Plain-text extraction of the SRS
+│   ├── CONTRACT.md                    API contract (frontend-backend agreement)
+│   ├── DATABASE_SETUP.md              MongoDB Atlas setup guide
+│   └── DEVIATIONS.md                  Honest documentation of substitutions
+│
+├── scripts/
+│   ├── demo_start.sh                  One-command demo startup script
+│   └── smoke_test.sh                  Automated smoke test for all endpoints
+│
+└── extra/
+    ├── work.txt                       THIS FILE — complete project documentation
+    ├── note.txt                       Quick notes
+    └── suggestion.txt                 Enhancement suggestions
+
+
+================================================================================
+4. DATA LAYER — RAW DATASETS
+================================================================================
+
+LOCATION: data/raw/
+
+FILE 1: osha_incidents.csv (4,847 rows, ~3.4 MB)
+-------------------------------------------------
+This is a real OSHA (Occupational Safety and Health Administration) public
+dataset of mixed-severity workplace incidents. Key columns:
+
+- summary_nr: Unique identifier for each incident
+- Abstract Text: Free-text narrative describing what happened
+- Event Description: Additional event details
+- Degree of Injury: Severity classification (e.g., "Fatal", "Hospitalized")
+- Nature of Injury: Type of injury (e.g., "Amputation, Crushing", "Fractures")
+- Event type: Classification (e.g., "Struck-by", "Fall (from elevation)")
+- Human Factor: Contributing human factor
+- Environmental Factor: Environmental conditions
+- Part of Body: Body part affected
+- Event Date: When the incident occurred
+- End Use: Industry context (e.g., "Construction")
+
+This corpus is used for:
+- Training the SIF (Serious Injury or Fatality) classifier
+- Training the LSR (Life Saving Rule) mapper
+- As the operational corpus for the dashboard
+- As part of the vector index for similarity search
+
+FILE 2: osha_fatalities.csv (14,914 rows, ~1.8 MB)
+----------------------------------------------------
+This is a real OSHA public dataset of confirmed workplace fatalities. Key columns:
+
+- id: Unique identifier
+- description: Free-text narrative of the fatal incident
+- incident_date: When it happened
+- city, state: Location
+- plan, citation: Jurisdiction/citation flags
+
+This corpus is used as:
+- The KNOWLEDGE BASE for similarity retrieval
+- The reference for the "Fatality Twin" escalation projection
+- Part of the Safety Memory corpus for precedent matching
+- Evidence base for CAPA (Corrective/Preventive Actions)
+
+IMPORTANT: Neither dataset carries site/area/department metadata (they are
+public OSHA datasets, not Oil India's internal system). These fields are
+DETERMINISTICALLY SYNTHESISED and DISCLOSED as synthetic via the
+is_synthetic_org_fields flag on every record.
+
+PROCESSED DATA: data/processed/
+After ETL, the cleaned and enriched data is saved as both .parquet (binary,
+fast for pandas) and .jsonl (JSON lines, human-readable) formats.
+- incidents.parquet / incidents.jsonl: Cleaned incidents with NER enrichment
+- fatalities.parquet / fatalities.jsonl: Cleaned fatalities with NER enrichment
+- etl_summary.json: Summary statistics of the ETL run
+
+
+================================================================================
+5. ML PIPELINE — FULL EXPLANATION OF EVERY FILE
+================================================================================
+
+The ML pipeline is in ml/pipeline/ and contains four core modules that are
+shared between the batch-processing path (training/scoring the historical
+corpus) and the live inference path (scoring a brand-new report submitted
+through the API).
+
+
+--------------------------------------------------------------------------------
+5.1 ETL Pipeline — ml/pipeline/etl.py (298 lines, 13 KB)
+--------------------------------------------------------------------------------
+
+PURPOSE: Implements SRS section 5.3 — the data pipeline that transforms raw
+CSV data into clean, enriched, labelled, and split datasets ready for ML.
+
+STAGES:
+1. ACQUISITION: Reads osha_incidents.csv and osha_fatalities.csv from data/raw/
+2. CLEANING: The _clean_text() function:
+   - Removes null bytes, normalises whitespace
+   - Expands safety abbreviations (LOTO → Lock-Out Tag-Out, PTW → Permit-to-Work,
+     PPE → Personal Protective Equipment, TBSA → Total Body Surface Area)
+   - Filters out narratives shorter than 15 characters
+3. DE-DUPLICATION:
+   - _dedupe_exact(): Removes exact duplicate narratives (case-insensitive)
+   - _dedupe_near(): Uses TF-IDF cosine similarity to find near-duplicates
+     (threshold=0.95). Only runs on corpora small enough for dense pairwise
+     comparison (capped at 6,000 rows).
+   - _consolidate_wrapped_rows(): Fixes CSV parsing issues where long narratives
+     were split across multiple rows sharing the same summary_nr
+4. ENRICHMENT:
+   - Applies Named Entity Recognition (extract_entities from ner.py) to
+     extract hazard tags, equipment tags, activity, conditions, barrier failures
+   - Synthesises site/area/department from a hash of the report_id, biased by
+     content keywords where they carry signal
+5. LABELLING:
+   - sif_positive: Binary label. 1 if Degree of Injury == "Fatal" OR
+     Nature of Injury is in {Amputation/Crushing, Electrocution, Asphyxiation/Drowning}
+   - report_type: INCIDENT (if sif_positive=1) or NEAR_MISS
+6. SPLITTING:
+   - stratified_split(): 70/15/15 train/val/test split, GROUPED BY SITE to
+     prevent data leakage (SRS 5.3 stage 6). This means all reports from a
+     given site are in the same split — no site appears in both train and test.
+
+KEY FUNCTIONS:
+- synth_site_area(report_id, text_hint): Deterministic site/area synthesis
+  using SHA-256 hash. If the narrative mentions keywords like "pipeline" or
+  "refinery", the site selection is biased toward matching sites.
+- synth_department(report_id, text_hint): Similar, using keyword patterns
+  (e.g., "electric|cable|wire" → Electrical Maintenance)
+- process_incidents(): Full pipeline for the incidents corpus
+- process_fatalities(): Full pipeline for the fatalities corpus
+
+OUTPUT:
+- data/processed/incidents.parquet and .jsonl
+- data/processed/fatalities.parquet and .jsonl
+- data/processed/etl_summary.json
+
+RUN: python3 ml/pipeline/etl.py
+
+
+--------------------------------------------------------------------------------
+5.2 Named Entity Recognition — ml/pipeline/ner.py (268 lines, 16 KB)
+--------------------------------------------------------------------------------
+
+PURPOSE: Gazetteer-driven entity extraction for safety narratives. Implements
+SRS 10.1 ("spaCy pipeline augmented with a curated safety gazetteer").
+
+ARCHITECTURE:
+- Uses a BLANK spaCy English pipeline (no downloaded model weights needed)
+- Adds an EntityRuler with curated pattern lists
+- Also uses regex-based barrier failure detection
+
+ENTITY TYPES EXTRACTED:
+1. HAZARD (27 terms): energized cable, live circuit, confined space atmosphere,
+   flammable vapor, toxic gas, falling object, etc.
+2. EQUIPMENT (28 terms): crane, forklift, scaffold, junction box, pressure
+   vessel, chainsaw, nail gun, etc.
+3. ACTIVITY (26 terms): welding, excavation, crane lift, confined space entry,
+   lockout tagout, etc.
+4. CONDITION (17 terms): isolation not verified, guard removed, ppe not worn,
+   no fall protection, etc.
+5. CONTROL (36 terms): atmospheric testing, gas detector, standby attendant,
+   fall harness, lockout tagout, fire watch, etc.
+
+BARRIER FAILURE DETECTION:
+Uses 20+ regex patterns to detect when a safety control was absent or failed.
+Examples:
+- "not locked out" → Energy isolation failure
+- "guard removed" or "guard missing" → Machine guarding failure
+- "not wearing a harness" → Fall protection failure
+- "no permit" → Permit to work failure
+- "atmospheric testing not completed" → Confined space control failure
+
+The patterns are conservative and precise: a missing barrier flag means "this
+narrative does not STATE a failed control", not "no barrier failed".
+
+FAILED CONTROL DETECTION:
+An additional layer of 40+ regex patterns detects SPECIFIC failed controls
+with human-readable labels:
+- "Gas monitoring" — gas detector not available/used
+- "Standby attendant" — attendant absent
+- "Entry permit" — no entry/confined space permit
+- "Fall arrest harness" — not wearing/using fall protection
+- "Energy isolation / LOTO" — lockout not performed
+- "Machine guarding" — guard removed/missing
+- "Ventilation" — ventilation not provided
+- etc.
+
+KEY FUNCTION:
+extract_entities(text) → Returns dict with keys:
+  hazard, equipment, activity, condition, control, barrier_failure, failed_controls
+
+This function is called BOTH during batch ETL AND during live inference,
+ensuring every report goes through identical extraction logic.
+
+
+--------------------------------------------------------------------------------
+5.3 Embeddings & Vector Index — ml/pipeline/embeddings.py (201 lines, 8 KB)
+--------------------------------------------------------------------------------
+
+PURPOSE: Creates 384-dimensional narrative embeddings and a FAISS vector index
+for semantic similarity search across the entire corpus.
+
+SRS SPECIFICATION vs IMPLEMENTATION:
+- SRS specifies: Sentence-Transformers all-MiniLM-L6-v2 (384-dim) served
+  through MongoDB Atlas Vector Search
+- Actual: TF-IDF (1-2 grams, 60K features) → TruncatedSVD(384) ("LSA
+  embedding") + FAISS IndexFlatIP. Reason: No outbound access to
+  huggingface.co to download transformer weights. See docs/DEVIATIONS.md.
+- The interface is IDENTICAL: encode_one(), encode_many(), search() work the
+  same way, so a real sentence-transformer could be dropped in later.
+
+CLASS: NarrativeEncoder
+- fit(texts): Fits TF-IDF vectorizer + TruncatedSVD on the combined corpus
+- encode(texts) → np.ndarray: Transforms texts to 384-dim L2-normalised vectors
+- encode_one(text) → np.ndarray: Single text encoding
+- save(path) / load(path): Pickle serialisation
+
+BOILERPLATE STRIPPING:
+OSHA incident abstracts share a near-fixed template preamble ("At 9:00 a.m.
+on August 10, 2017, an employee was..."). This is stripped BEFORE encoding
+because it dominates cosine similarity purely on template overlap, drowning
+out actual content similarity. The stored/displayed narrative is untouched.
+
+CLASS: VectorIndex
+- Uses FAISS IndexFlatIP (inner product on L2-normalised vectors = cosine sim)
+- Maintains SEPARATE sub-indices per source type:
+  - "ALL": Every vector (for unfiltered queries)
+  - "INCIDENT": Only incident vectors
+  - "FATALITY": Only fatality vectors
+  This ensures a "FATALITY-filtered" query returns the genuine top-k nearest
+  fatalities, not an oversample-then-filter slice that starves the minority.
+- search(query_vec, top_k, source_type, site, area): Returns sorted matches
+  with similarity scores
+- Supports site/area filtering by oversampling then post-filtering
+
+BUILD PROCESS:
+1. Read processed incidents.parquet and fatalities.parquet
+2. Fit encoder on combined narratives (both corpora together)
+3. Encode all narratives to 384-dim vectors
+4. Build FAISS indices (ALL, INCIDENT, FATALITY)
+5. Save everything to ml/artifacts/
+
+OUTPUT:
+- ml/artifacts/encoder.pkl (~91 MB)
+- ml/artifacts/incident_vectors.npy
+- ml/artifacts/fatality_vectors.npy
+- ml/artifacts/vector_index.faiss.ALL
+- ml/artifacts/vector_index.faiss.INCIDENT
+- ml/artifacts/vector_index.faiss.FATALITY
+- ml/artifacts/vector_meta.json
+
+RUN: python3 ml/pipeline/embeddings.py
+
+
+--------------------------------------------------------------------------------
+5.4 Inference Engine — ml/pipeline/inference.py (316 lines, 15 KB)
+--------------------------------------------------------------------------------
+
+PURPOSE: The single-report live analysis function. This is THE one function
+the backend calls for BOTH new reports submitted via the API AND for batch-
+scoring the historical corpus. It ties together EVERY AI component.
+
+CLASS: InferenceEngine (singleton, loaded once at startup)
+
+LOADED ARTIFACTS:
+- encoder.pkl (NarrativeEncoder)
+- vector_index.faiss + vector_meta.json (VectorIndex)
+- sif_classifier.joblib (text pipeline + column transformer + XGBoost + isotonic)
+- lsr_mapper.joblib (vectorizer + multi-label classifier + labels)
+
+METHOD: analyze(narrative, site, area, department, activity, report_id)
+
+PROCESSING STEPS (in order):
+
+STEP 1 — Entity Extraction:
+  Calls extract_entities(narrative) from ner.py to get hazards, equipment,
+  activities, conditions, controls, barrier_failure, failed_controls.
+
+STEP 2 — Organisational Metadata:
+  If site/area/department not provided, synthesises them deterministically
+  using synth_site_area() and synth_department() from etl.py.
+
+STEP 3 — SIF Probability:
+  a) Text pipeline: TF-IDF → LogisticRegression predicts P(SIF) from text
+  b) Structural pipeline: OneHotEncoder(area, department, activity) +
+     barrier_failure → XGBoost predicts P(SIF) from structured features
+  c) Blended: 0.65 * P_text + 0.35 * P_struct
+  d) Calibrated: Isotonic regression on the blended score (fitted on
+     validation set) produces a calibrated probability
+
+STEP 4 — Contextual Risk Adjustment:
+  A post-classifier layer that checks whether the narrative contains concrete
+  evidence of an active SIF precursor before accepting a high model score.
+  - If ANY SIF-positive signal is present (fatal, electrocution, fall from
+    height, confined space entry, etc.) → keep model probability
+  - If ZERO SIF signals AND ≥2 routine-observation signals (overdue tag,
+    routine inspection, good condition) → cap probability at 0.25
+  - Both the original and adjusted probability are returned transparently
+
+STEP 5 — LSR Tags:
+  TF-IDF → OneVsRest LogisticRegression gives per-rule probabilities.
+  Candidates above 0.20 floor are kept, sorted best-first.
+  Returns at most 1 primary + 2 related rules (with secondary 0.30 threshold).
+
+STEP 6 — Vector Embedding + Similarity Search:
+  Encodes the narrative, then queries the FAISS index for:
+  - Top 10 similar fatalities
+  - Top 10 similar incidents
+
+STEP 7 — Risk Fusion:
+  Calls fuse() from risk_fusion.py with P(SIF), LSR tags, barrier_failure,
+  and max fatality similarity. Produces risk_band and risk_score.
+
+STEP 8 — Explanation:
+  Linear-model token attribution. For a logistic regression head over TF-IDF,
+  contribution_j = coefficient_j × tfidf_value_j is the EXACT per-feature
+  attribution. Returns top 6 contributing terms with weights.
+
+STEP 9 — Root Cause Detection:
+  Determines primary contributing factor category:
+  - CONTROL_FAILURE: if failed controls detected
+  - PROCEDURE_VIOLATION: if barrier failure detected
+  - EQUIPMENT_RELATED: if LSR is mechanical lifting or hot work
+  - HAZARDOUS_CONDITION: if conditions detected
+  - CONTRIBUTING_FACTORS_DETECTED: fallback
+
+STEP 10 — Fatality Twin:
+  Calls build_twin() from fatality_twin.py with the matched fatalities to
+  build an escalation chain projection.
+
+STEP 11 — Recommendations:
+  Calls generate() from recommendations.py to produce corrective actions,
+  preventive actions, training needs, and toolbox talk.
+
+STEP 12 — Hash + Version:
+  Computes SHA-256 hash of narrative for audit trail, attaches model version.
+
+FULL OUTPUT: A dict with 30+ fields including all of the above.
+
+
+================================================================================
+6. ML MODELS — FULL EXPLANATION OF EVERY FILE
+================================================================================
+
+
+--------------------------------------------------------------------------------
+6.1 SIF Classifier Training — ml/models/train_sif_classifier.py (134 lines)
+--------------------------------------------------------------------------------
+
+PURPOSE: Trains the SIF (Serious Injury or Fatality) probability classifier.
+This is SRS 10.1 / Success Criterion SC-1.
+
+ARCHITECTURE:
+- TEXT HEAD: TfidfVectorizer(30K features, 1-2 grams) → LogisticRegression
+  (balanced class weights, C=2.0, max_iter=2000)
+- STRUCTURED HEAD: OneHotEncoder(area, department, activity) + barrier_failure
+  → XGBoost (300 estimators, depth 4, lr 0.08, scale_pos_weight for imbalance)
+- BLEND: 65% text + 35% structured (soft vote)
+- CALIBRATION: Isotonic regression fitted on validation predictions
+- THRESHOLD TUNING: On validation, maximise recall subject to precision ≥ 0.60
+
+TRAINING DATA:
+- Uses incidents.parquet with the "split" column
+- train/val/test from the stratified site-grouped split
+
+SUCCESS CRITERIA:
+- SC-1 recall target: 0.90
+- SC-1 ROC-AUC target: 0.88
+
+OUTPUT:
+- ml/artifacts/sif_classifier.joblib (contains text_pipe, column_transformer,
+  xgb, isotonic, threshold, blend_weights)
+- ml/artifacts/sif_classifier_metrics.json
+
+RUN: python3 ml/models/train_sif_classifier.py
+
+
+--------------------------------------------------------------------------------
+6.2 LSR Mapper Training — ml/models/train_lsr_mapper.py (61 lines)
+--------------------------------------------------------------------------------
+
+PURPOSE: Trains a multi-label Life Saving Rule mapper. SRS 10.1, SC-2.
+
+ARCHITECTURE:
+- TfidfVectorizer(30K features) → OneVsRestClassifier(LogisticRegression, balanced)
+- Trained on WEAK LABELS from lsr_rules.py (not human annotations)
+
+IMPORTANT NOTE: Reported Micro-F1 is "agreement with the weak-supervision
+heuristic", NOT agreement with human-annotated ground truth. This is stated
+plainly in lsr_mapper_metrics.json.
+
+OUTPUT:
+- ml/artifacts/lsr_mapper.joblib (vectorizer + clf + labels)
+- ml/artifacts/lsr_mapper_metrics.json
+
+RUN: python3 ml/models/train_lsr_mapper.py
+
+
+--------------------------------------------------------------------------------
+6.3 LSR Rules — ml/models/lsr_rules.py (94 lines)
+--------------------------------------------------------------------------------
+
+PURPOSE: Keyword heuristics for weak-labelling incidents with Life Saving Rules
+from the IOGP Report 459 taxonomy.
+
+THE 9 LIFE SAVING RULES:
+1. ENERGY_ISOLATION: lockout, tagout, energized, live circuit, stored energy
+2. WORK_AT_HEIGHT: fall from, scaffold, ladder, harness, guardrail, roof
+3. CONFINED_SPACE: confined space, atmospheric test, toxic gas, oxygen deficient
+4. LINE_OF_FIRE: struck by, caught in, caught between, falling object, crush
+5. SAFE_MECHANICAL_LIFTING: crane, hoist, suspended load, rigging, forklift
+6. HOT_WORK: welding, cutting torch, hot work, open flame, flammable vapor
+7. WORK_AUTHORISATION: permit to work, PTW, unauthorized work, no permit
+8. BYPASSING_CONTROLS: guard removed/missing/bypassed, safety device bypassed
+9. DRIVING_SAFETY: vehicle accident/collision, driving, seatbelt, speeding
+
+Also uses real structured fields from the OSHA data:
+- Human Factor → Rule mapping (e.g., "Safety Devices Removed/Inoperable" →
+  BYPASSING_CONTROLS, "Lockout/Tagout Procedure Malfunction" → ENERGY_ISOLATION)
+- Event type → Rule mapping (e.g., "Struck-by" → LINE_OF_FIRE,
+  "Fall (from elevation)" → WORK_AT_HEIGHT)
+
+
+--------------------------------------------------------------------------------
+6.4 Risk Fusion — ml/models/risk_fusion.py (65 lines)
+--------------------------------------------------------------------------------
+
+PURPOSE: Multi-signal risk band computation, exactly as SRS 10.2 specifies.
+
+FORMULA:
+  score = 0.55 × P(SIF)
+        + 0.25 × max(LSR_severity_weight)
+        + 0.10 × barrier_failure_present
+        + 0.10 × fatality_similarity_max
+
+RISK BANDS:
+  CRITICAL: score ≥ 0.85 OR (P(SIF) ≥ 0.90 AND barrier_failure)
+  HIGH:     score ≥ 0.65
+  MEDIUM:   score ≥ 0.40
+  LOW:      otherwise
+
+ESCALATION OVERRIDE: Any report matching a fatal case at ≥ 0.90 similarity
+is floored at HIGH (never below), regardless of the score formula.
+
+LSR SEVERITY WEIGHTS (historically most associated with fatal outcomes):
+  ENERGY_ISOLATION: 1.00    CONFINED_SPACE: 1.00    WORK_AT_HEIGHT: 0.90
+  LINE_OF_FIRE: 0.90       BYPASSING_CONTROLS: 0.85  HOT_WORK: 0.80
+  SAFE_MECHANICAL_LIFTING: 0.80  DRIVING_SAFETY: 0.75  WORK_AUTHORISATION: 0.70
+
+
+--------------------------------------------------------------------------------
+6.5 Fatality Twin — ml/models/fatality_twin.py (70 lines)
+--------------------------------------------------------------------------------
+
+PURPOSE: Builds the "Fatality Twin" — an escalation chain showing how a
+current near-miss could progress to a fatality, grounded in matched fatal cases.
+
+HOW IT WORKS:
+1. Takes the report's narrative and its matched fatalities from similarity search
+2. Detects the CONTACT TYPE from the report (9 patterns):
+   - Fall, Struck by object, Caught in/crushed, Electrical contact, Explosion,
+     Asphyxiation, Fire/burn, Structural collapse, Vehicle contact
+3. Counts the most common OUTCOME across matched fatalities (8 patterns):
+   - Severe burns, Fracture, Head trauma, Amputation, Asphyxiation,
+     Internal injuries, Fatal injury
+4. Builds a 4-node escalation CHAIN:
+   [Contact Type] → [Barrier Status] → [Common Outcome] → [Fatality]
+
+HONESTY PRINCIPLE: The barrier node only asserts a failure if one was actually
+detected in the report. If barrier_failure is False, the chain says "No
+confirmed barrier failure in this report's narrative" instead of manufacturing
+one.
+
+
+--------------------------------------------------------------------------------
+6.6 Recommendations / CAPA — ml/models/recommendations.py (113 lines)
+--------------------------------------------------------------------------------
+
+PURPOSE: Generates Corrective and Preventive Actions (CAPA) and Toolbox Talks,
+grounded in the LSR rules violated and the matched fatal precedents.
+
+FOR EACH OF THE 9 LSR RULES, there is a complete action template:
+- corrective: Immediate action to stop the hazard
+- preventive: Systemic action to prevent recurrence
+- training: Awareness/refresher session topic
+
+Example for ENERGY_ISOLATION:
+  corrective: "Verify and physically test isolation (lock-out/tag-out) before
+               any work resumes on this equipment."
+  preventive: "Audit lock-out/tag-out compliance across the department; refresh
+               isolation-verification training."
+  training:   "Energy Isolation (LOTO) refresher for all crew members."
+
+TOOLBOX TALK: Auto-generated 5-minute toolbox talk with:
+- Title based on the primary violated rule
+- 4 talking points referencing the specific hazard, equipment, barrier, and
+  matched fatal precedent
+
+PRECEDENT NOTE: Always states whether the actions are "grounded in N matched
+fatal case(s)" or "rule-based only (no matching fatal precedent)".
+
+
+--------------------------------------------------------------------------------
+6.7 Forecaster — ml/models/forecaster.py (82 lines)
+--------------------------------------------------------------------------------
+
+PURPOSE: 7-day risk forecaster per hazard/event category.
+
+APPROACH:
+- SRS specifies Prophet. This uses a simpler linear-trend + weekly-seasonal
+  residual model (same inputs/outputs, simpler failure mode).
+- Since the real data spans 2009-2022 (not the "last 90 days"), each report
+  is deterministically mapped onto a synthetic recent date via a stable hash.
+  This is disclosed via is_synthetic_timeline: true.
+
+OUTPUT per category:
+- history: 90 days of daily counts
+- forecast: 7 days of expected counts with 95% confidence intervals
+- direction: "up", "down", or "flat"
+- pct_change_vs_recent_mean: Percentage change
+
+
+--------------------------------------------------------------------------------
+6.8 Knowledge Graph — ml/models/knowledge_graph.py (82 lines)
+--------------------------------------------------------------------------------
+
+PURPOSE: Builds a safety knowledge graph connecting sites, activities, hazards,
+barrier failures, root causes, and outcomes.
+
+NODES: site, activity, hazard, barrier, root_cause, outcome, report
+EDGES: Report → Site, Report → Activity, Report → Root Cause, etc.
+
+CENTRALITY ANALYSIS: Uses NetworkX betweenness centrality to find the barrier
+failure node that threads through the most incident pathways — surfacing the
+single control whose failure is most connected to other incidents.
+
+OUTPUT: Cytoscape.js-compatible JSON for frontend visualisation.
+
+
+--------------------------------------------------------------------------------
+6.9 Pattern Clusters — ml/models/pattern_clusters.py (203 lines)
+--------------------------------------------------------------------------------
+
+PURPOSE: Discovers recurring patterns across the ENTIRE corpus — "the
+incidents nobody realised were the same event."
+
+METHOD:
+1. KMeans clustering (N=28) over 384-dim narrative embeddings of the FULL
+   corpus (incidents + fatalities together)
+2. For each cluster, derives:
+   - Dominant Life Saving Rule
+   - Barrier failure rate
+   - Fatal vs incident mix
+   - Sites affected and date range
+   - Human-readable label from top TF-IDF terms
+
+RANKING: Patterns are ranked by a composite severity score:
+  0.35 × mix_ratio (incident-to-fatality balance)
+  + 0.25 × fatal_rate
+  + 0.25 × relative_size
+  + 0.15 × site_spread
+A pattern is "actionable" when: ≥10 incidents AND ≥10 fatalities AND
+mix_ratio ≥ 0.15 (real mix, not rounding error).
+
+
+--------------------------------------------------------------------------------
+6.10 Build Analytics Artifacts — ml/models/build_analytics_artifacts.py (134 lines)
+--------------------------------------------------------------------------------
+
+PURPOSE: The master script that batch-scores the entire historical corpus and
+precomputes all dashboard aggregates.
+
+STEPS:
+1. Score every incident through the full InferenceEngine.analyze()
+2. Build aggregates: site/area/activity/department rollups, LSR counts, KPIs
+3. Build 7-day forecasts per event category
+4. Build the knowledge graph
+
+OUTPUT:
+- ml/artifacts/incidents_scored.jsonl (every incident + full AI analysis)
+- ml/artifacts/aggregates.json
+- ml/artifacts/forecast.json
+- ml/artifacts/graph.json
+
+RUN: python3 ml/models/build_analytics_artifacts.py
+
+
+================================================================================
+7. ML ARTIFACTS — WHAT GETS GENERATED
+================================================================================
+
+All generated artifacts live in ml/artifacts/. They are:
+
+TRAINED MODELS:
+- encoder.pkl (91 MB): TF-IDF vectorizer + TruncatedSVD, fitted on 16K+ texts
+- sif_classifier.joblib (1.2 MB): Trained SIF classifier ensemble
+- lsr_mapper.joblib (1.8 MB): Trained multi-label LSR mapper
+
+VECTOR INDEX:
+- incident_vectors.npy (7.4 MB): 384-dim vectors for all incidents
+- fatality_vectors.npy (17.6 MB): 384-dim vectors for all fatalities
+- vector_index.faiss.ALL (25 MB): FAISS index with ALL vectors
+- vector_index.faiss.INCIDENT: FAISS index with incident vectors only
+- vector_index.faiss.FATALITY: FAISS index with fatality vectors only
+- vector_meta.json (8.6 MB): Metadata (report_id, source_type, site, etc.)
+
+SCORED DATA:
+- incidents_scored.jsonl (49 MB): Every incident + full AI analysis output
+
+DASHBOARD AGGREGATES:
+- aggregates.json (8.7 KB): Site/area/activity/department rollups + KPIs
+- forecast.json (98 KB): 7-day forecasts per event category
+- graph.json (120 KB): Knowledge graph in Cytoscape JSON format
+- patterns.json (316 KB): Recurring pattern clusters
+
+METRICS:
+- sif_classifier_metrics.json: Test recall, precision, F1, ROC-AUC, Brier score
+- lsr_mapper_metrics.json: Micro-F1 vs weak labels, per-rule F1
+
+
+================================================================================
+8. BACKEND — FULL EXPLANATION OF EVERY FILE
+================================================================================
+
+
+--------------------------------------------------------------------------------
+8.1 Application Entry Point — backend/app/main.py (59 lines)
+--------------------------------------------------------------------------------
+
+- Loads .env variables using python-dotenv
+- Sets OMP_NUM_THREADS=1 (prevents OpenMP crashes on macOS ARM)
+- Creates FastAPI app titled "KAVACH AI"
+- Adds CORS middleware (allow all origins for development)
+- Registers all 10 routers: health, incidents, search, analytics, forecast,
+  recommendations, copilot, graph, bulletin, memory
+- Global exception handler: returns structured error JSON (NFR-06)
+- Startup event: Warms up database connection, data store, and inference engine
+
+
+--------------------------------------------------------------------------------
+8.2 Database Module — backend/app/database.py (100 lines)
+--------------------------------------------------------------------------------
+
+- Provides MongoDB Atlas connection via pymongo
+- Connection URI from MONGODB_URI environment variable
+- Creates indexes on the "reports" collection:
+  - report_id (unique), risk_band, site, department, reported_on, source
+- If MongoDB is unavailable, the app falls back gracefully to in-memory mode
+- get_db() → returns the database instance or None
+- mongo_available() → boolean check
+
+
+--------------------------------------------------------------------------------
+8.3 Hybrid Data Store — backend/app/store.py (224 lines)
+--------------------------------------------------------------------------------
+
+This is the CENTRAL data store that combines in-memory data with MongoDB
+persistence.
+
+STARTUP FLOW:
+1. Load pre-scored ML corpus from ml/artifacts/incidents_scored.jsonl into
+   self.incidents (in-memory list)
+2. Load fatality reference corpus from data/processed/fatalities.parquet
+3. Load forecast.json and graph.json artifacts
+4. Fetch any persisted LIVE_SUBMISSION documents from MongoDB and merge them
+   into self.incidents (so user-submitted reports survive restarts)
+
+MUTATION FLOW (POST /api/v1/incidents):
+- Append to in-memory list (immediate analytics reflect new report)
+- Upsert to MongoDB "reports" collection (persistence across restarts)
+- If MongoDB is down, the in-memory store still works — submission is not blocked
+
+READS:
+- get_by_id(report_id): Find one incident
+- as_dataframe(): Convert to pandas DataFrame
+- filtered(site, area, department, risk_band, date_from, date_to, q):
+  Multi-criteria filtering over the in-memory list
+- aggregates(): Cached computation of site/area/activity/department rollups
+- heatmap_geojson(): GeoJSON FeatureCollection with synthetic coordinates
+  around Duliajan, Assam (OIL's real operating area)
+
+SITE COORDINATES (synthetic, disclosed):
+  Rig-07 Duliajan: (27.38, 95.34)
+  Rig-12 Moran: (27.28, 95.40)
+  Rig-03 Kumchai: (27.20, 95.55)
+  Refinery Block A: (27.45, 95.30)
+  Refinery Block B: (27.47, 95.33)
+  Pipeline Sector 4: (27.30, 95.60)
+  Pipeline Sector 9: (27.15, 95.20)
+  Central Warehouse: (27.40, 95.25)
+  Field Workshop Duliajan: (27.36, 95.36)
+
+
+--------------------------------------------------------------------------------
+8.4 Pydantic Schemas — backend/app/schemas.py (37 lines)
+--------------------------------------------------------------------------------
+
+Request body validation models:
+- IncidentSubmit: narrative (min 10 chars), optional site/area/department
+- SemanticSearchRequest: query, top_k=10, optional source_type/site/area
+- CopilotRequest: query (min 2 chars)
+- BulletinRequest: scope (daily/weekly/executive), optional site
+- MemoryRecallRequest: narrative (min 10 chars), top_k (1-25, default 8)
+- StructuredQueryRequest: query (min 2 chars)
+
+
+--------------------------------------------------------------------------------
+8.5 All API Routers — backend/app/routers/ (10 files)
+--------------------------------------------------------------------------------
+
+HEALTH ROUTER (health.py — 19 lines):
+  GET /api/v1/health → { status, models_loaded, corpus_size, model_version,
+                          mongo_connected }
+
+INCIDENTS ROUTER (incidents.py — 111 lines):
+  POST /api/v1/incidents → Submit a narrative for live analysis
+    - Generates LIVE-XXXXX report_id
+    - Runs full InferenceEngine.analyze()
+    - Attaches Safety Memory recall (automatically, not on-demand)
+    - Persists to MongoDB + in-memory store
+    - Returns full AIAnalysis object
+
+  GET /api/v1/incidents → Paginated, filtered list of incidents
+    - Query params: site, area, department, risk_band, date_from, date_to,
+      q (text search), page, page_size
+    - Returns truncated summaries sorted by date (newest first)
+
+  GET /api/v1/incidents/{id} → Full detail for one report
+    - Also serves fatality records (FAT-XXXX) for precedent viewing
+    - Fatalities are marked is_analysed=false with explanation
+
+  GET /api/v1/incidents/{id}/similar → Similar incidents/fatalities
+    - Merges similar_fatalities + similar_incidents, optionally filtered by type
+
+SEARCH ROUTER (search.py — 17 lines):
+  POST /api/v1/search/semantic → Vector similarity search
+    - Encodes query text, searches FAISS index
+
+ANALYTICS ROUTER (analytics.py — 42 lines):
+  GET /api/v1/analytics/sites → Sites ranked by composite risk index
+  GET /api/v1/analytics/areas → Areas ranked
+  GET /api/v1/analytics/activities → Activities ranked
+  GET /api/v1/analytics/departments → Departments ranked
+  GET /api/v1/analytics/lsr → LSR rule counts
+  GET /api/v1/analytics/kpis → Summary KPIs + risk band distribution
+  GET /api/v1/analytics/heatmap → GeoJSON for map visualisation
+
+FORECAST ROUTER (forecast.py — 14 lines):
+  GET /api/v1/forecast?category= → 7-day forecasts per event category
+
+RECOMMENDATIONS ROUTER (recommendations.py — 22 lines):
+  POST /api/v1/recommendations/{id} → Regenerate CAPA for a report
+
+COPILOT ROUTER (copilot.py — 22 lines):
+  POST /api/v1/copilot/query → Chat query with intent routing + citations
+  POST /api/v1/copilot/structured-query → Multi-constraint NL query
+
+GRAPH ROUTER (graph.py — 17 lines):
+  GET /api/v1/graph?scope=&limit= → Knowledge graph (Cytoscape JSON)
+
+BULLETIN ROUTER (bulletin.py — 19 lines):
+  POST /api/v1/bulletin → Generates a PDF safety bulletin
+
+MEMORY ROUTER (memory.py — 46 lines):
+  GET /api/v1/incidents/{id}/memory → Safety Memory recall for existing report
+  POST /api/v1/memory/recall → Ad-hoc recall for unfiled narrative
+  GET /api/v1/memory/patterns?limit= → Corpus-wide recurring patterns
+  GET /api/v1/memory/patterns/{id} → One specific pattern
+
+
+--------------------------------------------------------------------------------
+8.6 All Backend Services — backend/app/services/ (4 files)
+--------------------------------------------------------------------------------
+
+COPILOT SERVICE (copilot.py — 264 lines):
+  The AI Safety Copilot with intent routing and citation guardrail.
+
+  INTENT ROUTING (checked in order):
+  1. Safety Memory: "has this happened before?", "seen this before?"
+  2. Structured Query: Multi-constraint questions (≥2 constraints)
+  3. Report Lookup: Any query containing a report ID (INC-/FAT-/LIVE-)
+  4. Site Ranking: "most dangerous", "riskiest", "which site"
+  5. CAPA: "capa", "corrective", "toolbox"
+  6. Summary: "summary"
+  7. Barrier Analysis: "barrier"
+  8. Comparison: "compare", "vs", "versus"
+  9. Semantic Fallback: Vector similarity search with 0.35 floor
+
+  CITATION GUARDRAIL: Every answer path either:
+  - Attaches real report_id citations → grounded: true
+  - Returns an explicit refusal → grounded: false
+  Nothing is EVER fabricated.
+
+STRUCTURED QUERY SERVICE (structured_query.py — 399 lines):
+  Multi-constraint natural-language query parsing and execution.
+
+  PARSER (deterministic regex, not LLM):
+  - TOPIC: Maps 50+ phrases to 9 LSR rules ("confined space", "lockout", etc.)
+  - SEASON: Indian operating seasons (monsoon=Jun-Sep, summer=Mar-May, etc.)
+  - YEAR: 4-digit year extraction
+  - SIF THRESHOLD: "SIF > 90", "score above 80", etc.
+  - RISK BAND: CRITICAL, HIGH, MEDIUM, LOW
+  - SITE/AREA/DEPARTMENT: Named entity matching
+  - CONDITIONS: "where the gas detector failed", "without fall arrest", etc.
+  - BARRIER FAILURE: "barrier failure", "control failure"
+
+  EXECUTION:
+  - Builds named predicates for each recognised constraint
+  - Filters the in-memory corpus with ALL predicates (AND logic)
+  - Computes aggregates over matched results
+  - ZERO-RESULT RELAXATION: If 0 results and >1 filter, drops each filter
+    one at a time to find the binding constraint
+
+  HONESTY PROPERTIES:
+  1. The parsed filter is shown back to the user
+  2. Anything it couldn't interpret goes in "unrecognised"
+  3. Zero results get explained, not just "no results"
+
+MEMORY SERVICE (memory.py — 268 lines):
+  Safety Memory — "an AI that remembers every safety incident ever reported."
+
+  recall(narrative, exclude_id, top_k) → dict:
+  1. Encodes narrative, searches FAISS index for similar records
+  2. Applies match floor (0.30) — below this, the match is noise
+  3. For each match, extracts LSR rules + barrier failure signals
+  4. Computes common_cause (majority rule across matches)
+  5. Determines verdict:
+     - REPEAT_FATAL_PATTERN: Closely matches fatalities (≥0.55 similarity)
+     - REPEAT_PATTERN: Strongly similar reports exist
+     - RELATED_FATAL_PRECEDENT: Moderately similar fatal cases
+     - WEAK_PRECEDENT: Only loosely similar reports
+     - NO_PRECEDENT: Nothing clears the floor
+  6. Assigns the report to its nearest pattern cluster
+
+BULLETIN SERVICE (bulletin.py — 75 lines):
+  Generates PDF safety bulletins using ReportLab.
+  Includes: KPI table, top sites by risk, top priority reports with
+  recommendations. Colour-coded by risk band.
+
+
+================================================================================
+9. FRONTEND — FULL EXPLANATION OF EVERY FILE
+================================================================================
+
+
+--------------------------------------------------------------------------------
+9.1 Entry Point & App Router
+--------------------------------------------------------------------------------
+
+main.jsx (29 lines):
+  React entry point. Sets up:
+  - StrictMode
+  - React Query (QueryClient with retry=1, no refetch on focus)
+  - BrowserRouter
+  - Theme initialisation (dark/light mode before React paints)
+
+App.jsx (58 lines):
+  React Router with lazy-loaded pages and Suspense fallback.
+
+  ROUTES:
+  /           → Landing (public marketing page, no layout)
+  /dashboard  → ExecutiveDashboard (in Layout)
+  /incidents  → IncidentExplorer (in Layout)
+  /incidents/:id → IncidentDetail (in Layout)
+  /report     → ReportIncident (in Layout)
+  /memory     → SafetyMemory (in Layout)
+  /sites      → SiteIntelligence (in Layout)
+  /areas      → AreaIntelligence (in Layout)
+  /hazards    → HazardAnalytics (in Layout)
+  /lsr        → LsrDashboard (in Layout)
+  /recommendations → Recommendations (in Layout)
+  /copilot    → Copilot (in Layout)
+  /graph      → KnowledgeGraph (in Layout)
+
+
+--------------------------------------------------------------------------------
+9.2 API Layer — src/api/
+--------------------------------------------------------------------------------
+
+client.js (33 lines):
+  Axios HTTP client with:
+  - Base URL from VITE_API_BASE_URL or default to cloud backend
+  - 60-second timeout
+  - Error interceptor that normalises { error: { code, message } } into
+    standard Error objects
+
+endpoints.js (93 lines):
+  Every function maps 1:1 to an endpoint in docs/CONTRACT.md:
+  - getHealth, submitIncident, listIncidents, getIncident, getSimilarIncidents
+  - semanticSearch
+  - getSiteAnalytics, getAreaAnalytics, getActivityAnalytics,
+    getDepartmentAnalytics, getLsrAnalytics, getKpis, getHeatmap
+  - getForecast
+  - generateRecommendations
+  - getIncidentMemory, recallMemory, getMemoryPatterns, getMemoryPattern
+  - queryCopilot, structuredQuery
+  - getGraph
+  - generateBulletin
+
+queries.js (144 lines):
+  React Query hooks wrapping every endpoint:
+  - useKpis, useSiteAnalytics, useAreaAnalytics, useActivityAnalytics,
+    useDepartmentAnalytics, useLsrAnalytics, useHeatmap, useForecast
+  - useIncidents, useIncident, useSimilarIncidents
+  - useGraph, useSemanticSearch
+  - useSubmitIncident (mutation, invalidates incidents + kpis cache)
+  - useGenerateRecommendations, useCopilotQuery, useStructuredQuery
+  - useIncidentMemory, useMemoryRecall, useMemoryPatterns, useMemoryPattern
+  - useGenerateBulletin
+
+
+--------------------------------------------------------------------------------
+9.3 State Management — src/store/
+--------------------------------------------------------------------------------
+
+filterStore.js (21 lines):
+  Zustand store for global filter state shared across pages via the top bar:
+  - site, area, department, dateFrom, dateTo
+  - Setter functions for each
+  - reset() to clear all filters
+  Constants: AREAS, RISK_BANDS
+
+
+--------------------------------------------------------------------------------
+9.4 Utility Libraries — src/lib/
+--------------------------------------------------------------------------------
+
+format.js (45 lines):
+  Formatting utilities:
+  - formatPct(0.95) → "95.0%"
+  - formatPercentValue(23.5) → "23.5%"
+  - formatNumber(1234567) → "12,34,567" (Indian numbering)
+  - formatDate() → "12 Sep 2026"
+  - formatDateTime() → "12 Sep 2026, 03:45 PM"
+  - truncate(text, max) → truncated text with ellipsis
+
+riskBands.js (69 lines):
+  Single source of truth for risk band visual tokens:
+  - RISK_BAND_STYLES: CSS classes for badge, dot, solid, text per band
+  - Theme-aware: reads CSS variables at runtime for chart colours
+  - riskStyle(band) → returns the complete style object
+  - bandForCompositeIndex(index) → maps numeric index to band name
+
+theme.js (44 lines):
+  Dark/light theme management:
+  - Reads from localStorage, falls back to system preference
+  - Applies 'dark' class on <html> element
+  - useTheme() hook for React components
+
+patternSeverity.js:
+  Classifies pattern severity for the Safety Memory page
+
+memoryVerdicts.js:
+  Styling and labelling for Safety Memory verdicts (REPEAT_FATAL_PATTERN, etc.)
+
+generateIncidentPdf.js (25 KB):
+  Client-side PDF generation using jsPDF for incident reports
+
+
+--------------------------------------------------------------------------------
+9.5 Layout Components — src/components/layout/
+--------------------------------------------------------------------------------
+
+Layout.jsx (2.5 KB):
+  Main layout wrapper with Sidebar + Topbar + Content area + FloatingAssistant
+
+Sidebar.jsx (9.2 KB):
+  Navigation sidebar with collapsible sections:
+  - Overview: Dashboard
+  - Reports: All Reports, Report Incident
+  - Safety Memory (USP badge)
+  - Analytics: Sites, Areas, Hazards, LSR Rules, Recommendations
+  - AI: Safety Copilot, Knowledge Graph
+  - Responsive: collapses on mobile
+
+Topbar.jsx (6.5 KB):
+  Top bar with:
+  - Global filter dropdowns (site, area, department, date range)
+  - Theme toggle (dark/light)
+  - Health status indicator
+
+
+--------------------------------------------------------------------------------
+9.6 Common Reusable Components — src/components/common/
+--------------------------------------------------------------------------------
+
+AsyncSection.jsx: Wrapper that shows loading/error/data states
+ChartKit.jsx: Reusable Recharts components (Bar, Line, Pie, etc.)
+EmptyState.jsx: "No data" state with icon and message
+ErrorState.jsx: Error display with retry button
+KpiCard.jsx: KPI metric card with trend indicator
+Pagination.jsx: Page navigation controls
+RiskBadge.jsx: Coloured risk band pill (LOW/MEDIUM/HIGH/CRITICAL)
+SectionErrorBoundary.jsx: React error boundary for graceful section failures
+Skeleton.jsx: Loading skeleton animations
+SyntheticBadge.jsx: Badge disclosing synthetic/synthesised data
+
+
+--------------------------------------------------------------------------------
+9.7 Incident Components — src/components/incident/
+--------------------------------------------------------------------------------
+
+CapaPanel.jsx (6.1 KB):
+  Displays Corrective Actions, Preventive Actions, Training Needs,
+  and Toolbox Talk for a report
+
+EntityTags.jsx (1.9 KB):
+  Displays extracted entities (hazards, equipment, activities) as tags
+
+ExplanationPanel.jsx (3.4 KB):
+  Shows AI explanation with token attribution weights (why the model scored
+  this report as it did)
+
+FatalityTwinChain.jsx (5.6 KB):
+  Visual escalation chain: Contact → Barrier → Outcome → Fatality
+  With matched fatal case references
+
+LsrMapping.jsx (2.1 KB):
+  Life Saving Rule tags with confidence scores
+
+RiskGauge.jsx (3.6 KB):
+  Visual gauge showing risk score, SIF probability, and risk band
+
+
+--------------------------------------------------------------------------------
+9.8 Copilot Components — src/components/copilot/
+--------------------------------------------------------------------------------
+
+CopilotChat.jsx (10.3 KB):
+  Full chat interface for the AI Safety Copilot
+  - Message history display
+  - Citation links to real reports
+  - Grounded/ungrounded indicator
+  - Structured query results embedded in chat
+
+FloatingAssistant.jsx (4.6 KB):
+  Floating button that opens the copilot chat from any page
+
+StructuredQueryPanel.jsx (14 KB):
+  Dedicated UI for multi-constraint natural-language queries
+  - Shows parsed filters as chips
+  - Shows unrecognised terms
+  - Displays aggregate results
+
+StructuredResultView.jsx (8.5 KB):
+  Results display for structured queries with:
+  - Applied filter chips
+  - Aggregate statistics
+  - Matching report list
+  - Relaxation analysis (for zero results)
+
+
+--------------------------------------------------------------------------------
+9.9 Diagram Components — src/components/diagrams/
+--------------------------------------------------------------------------------
+
+PipelineFlow.jsx (3.7 KB):
+  Visual representation of the ML pipeline flow
+
+RiskFusionBar.jsx (3.6 KB):
+  Shows the breakdown of the risk fusion formula components
+  (SIF weight, LSR weight, barrier weight, fatality similarity weight)
+
+
+--------------------------------------------------------------------------------
+9.10 Memory Components — src/components/memory/
+--------------------------------------------------------------------------------
+
+PatternCard.jsx (8.6 KB):
+  Displays a recurring pattern with:
+  - Label, size, fatal/incident counts
+  - Dominant rule and barrier failure rate
+  - Top sites and date range
+  - Example narratives
+  - Severity score visualisation
+
+SafetyMemoryPanel.jsx (12.5 KB):
+  Full Safety Memory display for a report:
+  - Verdict badge (REPEAT_FATAL_PATTERN, etc.)
+  - Match list with similarity scores
+  - Common cause analysis
+  - Recommended action
+  - Pattern assignment
+
+
+--------------------------------------------------------------------------------
+9.11 All Pages — Detailed Explanation
+--------------------------------------------------------------------------------
+
+LANDING PAGE — Landing.jsx (35 KB):
+  Marketing/intro page with:
+  - Hero section with animated elements
+  - Feature highlights (Safety Memory, Structured Query, Fatality Twin, etc.)
+  - Architecture diagram
+  - Team section
+  - Call to action to enter the dashboard
+
+EXECUTIVE DASHBOARD — ExecutiveDashboard.jsx (20 KB):
+  Overview page with:
+  - KPI cards (total reports, critical %, high+ %, avg SIF probability)
+  - Risk band distribution pie chart
+  - Top sites by composite risk index
+  - Recent high-risk incidents
+  - LSR rule distribution
+  - Quick actions (report incident, copilot, etc.)
+
+INCIDENT EXPLORER — IncidentExplorer.jsx (15 KB):
+  Browse/filter/search all incidents:
+  - Multi-filter panel (site, area, department, risk band, date range, text)
+  - Paginated table of incidents
+  - Sort by date/risk
+  - Click through to detail view
+
+INCIDENT DETAIL — IncidentDetail.jsx (14 KB):
+  Deep-dive view for a single report showing:
+  - Full narrative text
+  - Risk gauge + risk band badge
+  - AI explanation (token weights)
+  - Entity tags (hazards, equipment, activities, conditions)
+  - LSR mapping with confidence
+  - Fatality Twin escalation chain
+  - Similar fatalities and incidents
+  - CAPA recommendations
+  - Safety Memory panel
+  - Risk fusion breakdown
+  - PDF export
+
+REPORT INCIDENT — ReportIncident.jsx (12.5 KB):
+  Form to submit a new incident narrative:
+  - Large text area for narrative
+  - Optional site/area/department dropdowns
+  - Submit button triggers full AI analysis
+  - After submission: shows the complete analysis result with all components
+  - Safety Memory recall shown immediately
+
+SAFETY MEMORY — SafetyMemory.jsx (11 KB):
+  Two-part page:
+  1. Recurring Patterns: Corpus-wide clusters ranked by severity
+  2. Ad-hoc Recall: Paste any narrative to check "has this happened before?"
+  Pattern detail view shows examples, sites, rules, and barrier failures
+
+SITE INTELLIGENCE — SiteIntelligence.jsx (10 KB):
+  - Leaflet geospatial heatmap of all incidents
+  - Site ranking table with composite risk index
+  - Site-specific metrics on click
+
+AREA INTELLIGENCE — AreaIntelligence.jsx (7.2 KB):
+  Area-level analytics with bar charts and ranking tables
+
+HAZARD ANALYTICS — HazardAnalytics.jsx (37.5 KB):
+  The largest page. Contains:
+  - Activity breakdown with risk metrics
+  - Forecast charts (7-day predictions per category)
+  - Historical trends
+  - Category comparison
+
+LSR DASHBOARD — LsrDashboard.jsx (11 KB):
+  Life Saving Rule analytics:
+  - Bar chart of rule violations by count
+  - Rule detail cards with average score
+  - Drill-down to incidents per rule
+
+RECOMMENDATIONS — Recommendations.jsx (9 KB):
+  CAPA viewer for any report:
+  - Enter report ID
+  - See corrective actions, preventive actions, training needs
+  - Toolbox talk generation
+
+COPILOT — Copilot.jsx (2.7 KB):
+  Full-page AI Safety Copilot:
+  - Chat interface
+  - Structured query panel
+  - Sample questions for guidance
+
+KNOWLEDGE GRAPH — KnowledgeGraph.jsx (25 KB):
+  Interactive graph visualisation:
+  - Uses Cytoscape.js for graph rendering
+  - Node types: site, activity, hazard, barrier, root_cause, outcome, report
+  - Node size by betweenness centrality
+  - Click to explore connections
+  - Top barrier centrality ranking
+
+
+================================================================================
+10. COMPLETE DATA FLOW & WORKFLOW
+================================================================================
+
+=== FLOW 1: ML PIPELINE BUILD (one-time) ===
+
+  Raw CSVs ──→ ETL (etl.py) ──→ Cleaned Parquet/JSONL
+       │
+       ├── Entity Extraction (ner.py) applied per narrative
+       ├── Weak labelling (lsr_rules.py) for LSR rules
+       ├── Site/area/department synthesis
+       └── Stratified train/val/test split
+
+  Cleaned Data ──→ Embeddings (embeddings.py) ──→ Encoder + Vector Index
+       │
+       ├── TF-IDF fit on combined corpus
+       ├── SVD(384) dimensionality reduction
+       └── FAISS index built (ALL + per source type)
+
+  Cleaned Data ──→ SIF Classifier (train_sif_classifier.py) ──→ sif_classifier.joblib
+       │
+       ├── Text pipeline (TF-IDF → LogReg)
+       ├── Structured pipeline (OneHot → XGBoost)
+       ├── Blended 65/35, isotonic calibrated
+       └── Threshold tuned on validation
+
+  Cleaned Data ──→ LSR Mapper (train_lsr_mapper.py) ──→ lsr_mapper.joblib
+       │
+       └── TF-IDF → OneVsRest LogReg on weak labels
+
+  Cleaned Data + All Artifacts ──→ Batch Scoring (build_analytics_artifacts.py)
+       │
+       ├── Score every incident through InferenceEngine
+       ├── Precompute dashboard aggregates
+       ├── Build 7-day forecasts
+       ├── Build knowledge graph
+       └── Build recurring pattern clusters
+
+=== FLOW 2: BACKEND STARTUP ===
+
+  FastAPI app starts
+       │
+       ├── database.py: Connect to MongoDB Atlas (or fallback to memory-only)
+       ├── store.py: Load incidents_scored.jsonl (16K+ scored incidents)
+       │             Load fatalities.parquet (14K+ fatality records)
+       │             Load forecast.json, graph.json
+       │             Merge any persisted LIVE_SUBMISSION from MongoDB
+       └── inference.py: Load encoder, vector index, SIF classifier, LSR mapper
+
+=== FLOW 3: LIVE INCIDENT SUBMISSION ===
+
+  User types narrative in frontend
+       │
+       ↓
+  POST /api/v1/incidents { narrative, site?, area?, department? }
+       │
+       ↓
+  InferenceEngine.analyze()
+       │
+       ├── 1. extract_entities(narrative) → hazards, equipment, barriers
+       ├── 2. Synthesise site/area/department if not provided
+       ├── 3. SIF probability (text + structured blend → calibrated)
+       ├── 4. Contextual risk adjustment
+       ├── 5. LSR tags (multi-label classification)
+       ├── 6. Vector similarity search (FAISS → top 10 fatalities + incidents)
+       ├── 7. Risk fusion (4-signal weighted formula → band)
+       ├── 8. Explanation (token attribution)
+       ├── 9. Root cause detection
+       ├── 10. Fatality Twin (escalation chain)
+       └── 11. Recommendations (CAPA + toolbox talk)
+       │
+       ↓
+  Safety Memory recall (AUTOMATIC — every new report)
+       │
+       ├── Encode narrative, search FAISS
+       ├── Find matches above floor
+       ├── Compute common cause
+       ├── Determine verdict
+       └── Assign to pattern cluster
+       │
+       ↓
+  Response returned to frontend (full AIAnalysis + safety_memory)
+       │
+  Simultaneously:
+       ├── Appended to in-memory store (immediate analytics update)
+       └── Upserted to MongoDB (persistence across restarts)
+
+=== FLOW 4: COPILOT QUERY ===
+
+  User types question
+       │
+       ↓
+  POST /api/v1/copilot/query
+       │
+       ↓
+  Intent routing:
+       │
+       ├── Memory recall? → Safety Memory service
+       ├── Multi-constraint? → Structured query engine
+       ├── Contains report ID? → Report lookup
+       ├── "Riskiest site?" → Site ranking from aggregates
+       ├── "CAPA?" → Generate recommendations
+       ├── "Summary?" → KPI summary
+       ├── "Barrier?" → Barrier centrality analysis
+       ├── "Compare X vs Y?" → Side-by-side comparison
+       └── None of the above → Semantic vector search fallback
+       │
+       ↓
+  Answer with citations (or explicit refusal if ungrounded)
+
+=== FLOW 5: STRUCTURED QUERY ===
+
+  "Show all confined space incidents during monsoon with SIF > 90 where gas
+   detector failed"
+       │
+       ↓
+  Parse:
+       ├── topic: CONFINED_SPACE
+       ├── season: monsoon (June-September)
+       ├── sif: > 0.90
+       └── condition: "gas detector" (failed)
+       │
+       ↓
+  Build predicates (one per constraint)
+       │
+       ↓
+  Filter corpus with AND of all predicates
+       │
+       ↓
+  If results: aggregate + report list
+  If 0 results: relax each filter → find binding constraint
+
+
+================================================================================
+11. API CONTRACT — EVERY ENDPOINT
+================================================================================
+
+All endpoints are documented in detail in docs/CONTRACT.md. Summary:
+
+BASE URL: http://localhost:8000
+ALL RESPONSES: JSON unless noted
+
+HEALTH:
+  GET  /api/v1/health
+
+INCIDENTS:
+  POST /api/v1/incidents (submit for analysis)
+  GET  /api/v1/incidents (paginated list with filters)
+  GET  /api/v1/incidents/{id} (detail)
+  GET  /api/v1/incidents/{id}/similar (similar matches)
+
+SEARCH:
+  POST /api/v1/search/semantic
+
+ANALYTICS:
+  GET  /api/v1/analytics/sites
+  GET  /api/v1/analytics/areas
+  GET  /api/v1/analytics/activities
+  GET  /api/v1/analytics/departments
+  GET  /api/v1/analytics/lsr
+  GET  /api/v1/analytics/kpis
+  GET  /api/v1/analytics/heatmap
+
+FORECAST:
+  GET  /api/v1/forecast?category=
+
+RECOMMENDATIONS:
+  POST /api/v1/recommendations/{id}
+
+COPILOT:
+  POST /api/v1/copilot/query
+  POST /api/v1/copilot/structured-query
+
+KNOWLEDGE GRAPH:
+  GET  /api/v1/graph?scope=&limit=
+
+BULLETIN:
+  POST /api/v1/bulletin (returns PDF)
+
+SAFETY MEMORY:
+  GET  /api/v1/incidents/{id}/memory
+  POST /api/v1/memory/recall
+  GET  /api/v1/memory/patterns?limit=
+  GET  /api/v1/memory/patterns/{id}
+
+ERROR FORMAT:
+  { "error": { "code": "string", "message": "string" } }
+
+
+================================================================================
+12. DOCKER & DEPLOYMENT
+================================================================================
+
+docker-compose.yml (22 lines):
+  Two services:
+  1. backend: Builds from backend/Dockerfile, exposes port 8000
+     - Mounts ml/artifacts and data/processed as volumes
+  2. frontend: Builds from frontend/Dockerfile, exposes port 5173
+     - Passes VITE_API_BASE_URL=http://localhost:8000 as build arg
+     - depends_on: backend
+
+Backend Dockerfile (24 lines):
+  - Base: python:3.11-slim
+  - Copies ml/, data/, backend/
+  - Installs requirements.txt
+  - Runs: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+Frontend Dockerfile:
+  - Multi-stage: build with Node, serve with nginx
+  - Accepts VITE_API_BASE_URL as build arg
+
+CLOUD DEPLOYMENT:
+  The backend is deployable to Render.com (the default API_BASE_URL in
+  client.js is currently set to http://localhost:8000 for faster local testing)
+
+
+================================================================================
+13. CONFIGURATION FILES
+================================================================================
+
+.gitignore:
+  - Keeps ML artifacts in git (for fast cloud deployment)
+  - Excludes processed data (regenerate via etl.py)
+  - Standard Python/Node/OS exclusions
+  - Excludes .env files (never commit secrets)
+
+backend/.env.example:
+  MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/...
+  MONGODB_DB_NAME=kavach_ai
+
+backend/requirements.txt:
+  fastapi, uvicorn, pydantic, pandas, numpy, scikit-learn, xgboost,
+  spacy, faiss-cpu, networkx, joblib, reportlab, python-multipart,
+  pyarrow, pymongo[srv], python-dotenv
+
+frontend/package.json dependencies:
+  react, react-dom, react-router-dom, @tanstack/react-query, axios,
+  zustand, recharts, cytoscape, react-cytoscapejs, leaflet, react-leaflet,
+  framer-motion, lucide-react, clsx, jspdf
+
+frontend/vite.config.js:
+  Vite with React plugin
+
+frontend/tailwind.config.js (6.4 KB):
+  Extended theme with custom colours, risk-band tokens, dark mode classes
+
+frontend/postcss.config.js:
+  TailwindCSS + Autoprefixer
+
+
+================================================================================
+14. TWO FLAGSHIP DIFFERENTIATORS
+================================================================================
+
+DIFFERENTIATOR 1: SAFETY MEMORY
+"An AI that remembers every safety incident ever reported."
+
+TODAY'S PROBLEM: Every report is reviewed in isolation. The 4th occurrence of
+a pattern is investigated as if it were the 1st. Nobody connects the dots.
+
+HOW IT WORKS:
+- Every new report is AUTOMATICALLY compared against ALL 16,249 records
+- Nobody has to think to ask "has this happened before?" — it comes back
+  automatically as part of the submission response
+- Three questions answered:
+  1. Has this happened before? → Ranked matches with similarity scores
+  2. What was the common cause? → Counted majority across matches (always
+     shown as "3 of 8" so a plurality never reads as a law)
+  3. What should be done? → Precedent-driven action for the violated rule
+- Also clusters the entire corpus into 28 recurring patterns
+- Each pattern shows incident/fatality mix, sites affected, date range
+- New reports are assigned to their pattern via centroid dot product
+
+DIFFERENTIATOR 2: STRUCTURED NATURAL-LANGUAGE QUERY
+"Ask instead of building a dashboard."
+
+TODAY'S PROBLEM: A question like "Show all confined space incidents during
+monsoon having SIF > 90 where gas detector failed" carries FOUR independent
+constraints that NO filter bar composes.
+
+HOW IT WORKS:
+- The Copilot parses the question into an explicit filter object
+- Each constraint becomes a named predicate
+- All predicates are ANDed to filter the corpus
+- Returns: count, most common site, which control keeps failing
+- TWO HONESTY PROPERTIES:
+  1. The parsed filter is shown back to the user
+  2. Anything it couldn't interpret is reported, not silently dropped
+- ZERO-RESULT HANDLING: Instead of "no results", relaxes each constraint in
+  turn to name the binding one ("0 match all four — dropping 'gas detector'
+  alone returns 4")
+
+
+================================================================================
+15. HOW TO RUN THE PROJECT (STEP BY STEP)
+================================================================================
+
+PREREQUISITES:
+- Python 3.11+
+- Node.js 18+
+- pip, npm
+- (Optional) MongoDB Atlas account for persistence
+
+STEP 1: Build the ML pipeline (one-time, produces everything under ml/artifacts/)
+
+  pip install -r backend/requirements.txt
+
+  python3 ml/pipeline/etl.py                       # Clean, label, split corpora
+  python3 ml/pipeline/embeddings.py                # Fit encoder + build vector index
+  python3 ml/models/train_sif_classifier.py        # SIF classifier (SC-1)
+  python3 ml/models/train_lsr_mapper.py            # LSR mapper (SC-2)
+  export OMP_NUM_THREADS=1                         # macOS ARM only
+  python3 ml/models/build_analytics_artifacts.py   # Batch score + dashboard artifacts
+  python3 ml/models/pattern_clusters.py            # Safety Memory patterns
+
+  NOTE: The artifacts are already committed to git, so this step is only
+  needed if you want to regenerate them from scratch.
+
+STEP 2: Run the backend
+
+  cd backend
+  uvicorn app.main:app --reload --port 8000
+  # → http://localhost:8000/api/v1/health
+  # → http://localhost:8000/docs (OpenAPI interactive documentation)
+
+STEP 3: Run the frontend
+
+  cd frontend
+  npm install
+  npm run dev
+  # → http://localhost:5173
+
+STEP 4 (Alternative): Run both with Docker
+
+  docker compose up --build
+  # Backend at http://localhost:8000
+  # Frontend at http://localhost:5173
+
+STEP 5 (Optional): Configure MongoDB persistence
+
+  cp backend/.env.example backend/.env
+  # Edit backend/.env with your MongoDB Atlas credentials
+  # Restart the backend
+
+ONE-COMMAND DEMO START:
+  bash scripts/demo_start.sh
+
+
+================================================================================
+16. TECHNOLOGY STACK SUMMARY
+================================================================================
+
+BACKEND:
+  - Python 3.11
+  - FastAPI (ASGI web framework)
+  - Uvicorn (ASGI server)
+  - Pydantic (request validation)
+  - Pandas / NumPy (data processing)
+  - scikit-learn (ML: TF-IDF, SVD, LogReg, Isotonic, KMeans)
+  - XGBoost (structured feature classifier)
+  - spaCy (NER pipeline)
+  - FAISS (vector similarity search)
+  - NetworkX (knowledge graph)
+  - ReportLab (PDF generation)
+  - pymongo (MongoDB Atlas driver)
+  - python-dotenv (environment variables)
+
+FRONTEND:
+  - React 18 (UI framework)
+  - Vite 8 (build tool)
+  - TailwindCSS 3 (styling)
+  - React Router 7 (routing)
+  - React Query / TanStack Query 5 (data fetching + caching)
+  - Axios (HTTP client)
+  - Zustand 5 (state management)
+  - Recharts 3 (charts and graphs)
+  - Cytoscape.js (knowledge graph visualisation)
+  - Leaflet / React-Leaflet (geospatial maps)
+  - Framer Motion (animations)
+  - Lucide React (icons)
+  - jsPDF (client-side PDF generation)
+
+DATABASE:
+  - MongoDB Atlas (optional, for LIVE_SUBMISSION persistence)
+  - Falls back to in-memory mode if unavailable
+
+DEPLOYMENT:
+  - Docker / Docker Compose
+  - Render.com (cloud deployment)
+
+
+================================================================================
+                              END OF DOCUMENT
+================================================================================
+
+This document covers every single file, every workflow, every data flow, every
+API endpoint, every component, every model, every algorithm, every design
+decision, and every configuration in the KAVACH AI project. Reading this
+document is sufficient to completely understand the entire project from top
+to bottom without needing to look at any source code.
+
+Total files documented: 95+
+Total lines of code across all files: ~8,000+
+Total ML artifacts: 17 files (~200 MB)
+Total historical records processed: 16,249+
+
+Team: The Last Commit
+Hackathon: Smart India Hackathon 2026
+Problem: Industrial Safety Intelligence for Oil India Limited
