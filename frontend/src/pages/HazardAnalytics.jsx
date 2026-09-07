@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  MapContainer, TileLayer, CircleMarker, Popup, useMap,
+  MapContainer, TileLayer, CircleMarker, Popup, Tooltip as LTooltip, useMap,
 } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import {
@@ -100,6 +100,17 @@ function MapControls() {
   )
 }
 
+/* ── Fly to highlighted site ──────────────────────────────────────────── */
+function FlyToSite({ site }) {
+  const map = useMap()
+  useEffect(() => {
+    if (site && SITE_COORDS[site]) {
+      map.flyTo(SITE_COORDS[site], 14, { duration: 0.8 })
+    }
+  }, [site, map])
+  return null
+}
+
 /* ── Geographic Risk Map ──────────────────────────────────────────────── */
 function GeographicRiskMap({ siteData, highlightedSite, onSiteClick }) {
   const sites = useMemo(() => {
@@ -142,6 +153,7 @@ function GeographicRiskMap({ siteData, highlightedSite, onSiteClick }) {
           maxZoom={19}
         />
         <MapControls />
+        <FlyToSite site={highlightedSite} />
         {sites.map((site) => (
           <CircleMarker
             key={site.site}
@@ -158,6 +170,17 @@ function GeographicRiskMap({ siteData, highlightedSite, onSiteClick }) {
               click: () => onSiteClick?.(site.site),
             }}
           >
+            <LTooltip
+              direction="top"
+              offset={[0, -site.radius]}
+              opacity={0.95}
+              className="kavach-map-tooltip"
+            >
+              <span style={{ fontWeight: 700, fontSize: 11 }}>{site.site}</span>
+              <br />
+              <span style={{ color: site.color, fontWeight: 700, fontSize: 10 }}>{site.band}</span>
+              <span style={{ marginLeft: 6, fontSize: 10, opacity: 0.7 }}>{formatNumber(site.report_count)} reports</span>
+            </LTooltip>
             <Popup>
               <div className="min-w-[180px] space-y-2 p-1">
                 <div className="flex items-center gap-2">

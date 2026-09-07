@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileText, Loader2, Sparkles, AlertTriangle, ShieldCheck, FlaskConical } from 'lucide-react'
+import { FileText, Loader2, Sparkles, AlertTriangle, ShieldCheck, FlaskConical, Upload, X } from 'lucide-react'
 import { useSubmitIncident } from '../api/queries'
+import { extractTextFromPdf } from '../api/endpoints'
 
 /* ── Demo scenarios for SIH presentation ──────────────────────────────── */
 const DEMO_SCENARIOS = [
@@ -65,6 +66,45 @@ export default function ReportIncident() {
   const [area, setArea] = useState('')
   const [department, setDepartment] = useState('')
   const [errorMsg, setErrorMsg] = useState(null)
+  const [pdfFile, setPdfFile] = useState(null)
+  const [pdfExtracting, setPdfExtracting] = useState(false)
+  const [pdfWarning, setPdfWarning] = useState(null)
+  const fileInputRef = useRef(null)
+
+  async function handlePdfUpload(file) {
+    if (!file) return
+    if (file.type !== 'application/pdf') {
+      setErrorMsg('Only PDF files are accepted.')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMsg('PDF exceeds 10 MB limit.')
+      return
+    }
+    setPdfFile(file)
+    setPdfWarning(null)
+    setErrorMsg(null)
+    setPdfExtracting(true)
+    try {
+      const result = await extractTextFromPdf(file)
+      if (result.text) {
+        setNarrative((prev) => (prev ? prev + '\n\n' + result.text : result.text))
+      }
+      if (result.warning) {
+        setPdfWarning(result.warning)
+      }
+    } catch (err) {
+      setErrorMsg(err?.message || 'Failed to extract text from PDF.')
+    } finally {
+      setPdfExtracting(false)
+    }
+  }
+
+  function clearPdf() {
+    setPdfFile(null)
+    setPdfWarning(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
   function handleSubmit(e) {
     e.preventDefault()
@@ -176,6 +216,53 @@ export default function ReportIncident() {
             placeholder="Describe what happened. Be specific about hazards, equipment, and conditions (e.g., 'Worker was adjusting a conveyor belt guide rail while the machine was running; hand was caught in pinch point. LOTO was bypassed...')"
             className="input w-full resize-y text-sm px-3.5 py-2.5 min-h-[140px] focus:outline-none focus:ring-1 focus:ring-brand-500"
           />
+        </div>
+
+        {/* PDF Upload */}
+        <div className="space-y-2">
+          <label className="block text-xs font-bold uppercase tracking-wider text-fg-2">
+            Upload PDF Report
+          </label>
+          <div className="flex items-center gap-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={(e) => handlePdfUpload(e.target.files?.[0])}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={pdfExtracting}
+              className="btn-secondary flex items-center gap-2 px-3 py-2 text-xs"
+            >
+              {pdfExtracting ? (
+                <>
+                  <Loader2 size={13} className="animate-spin" aria-hidden="true" />
+                  Extracting...
+                </>
+              ) : (
+                <>
+                  <Upload size={13} aria-hidden="true" />
+                  Choose PDF
+                </>
+              )}
+            </button>
+            {pdfFile && (
+              <span className="flex items-center gap-1.5 rounded-lg border border-line bg-surface-2 px-2.5 py-1.5 text-2xs text-fg-2">
+                <FileText size={12} className="text-brand-500" aria-hidden="true" />
+                {pdfFile.name}
+                <button type="button" onClick={clearPdf} className="ml-1 text-fg-3 hover:text-fg" aria-label="Remove PDF">
+                  <X size={12} />
+                </button>
+              </span>
+            )}
+          </div>
+          {pdfWarning && (
+            <p className="text-2xs text-yellow-500">{pdfWarning}</p>
+          )}
+          <p className="text-2xs text-fg-3">Upload a PDF incident report to extract its text into the narrative field. Max 10 MB.</p>
         </div>
 
         {/* Optional Metadata Grid */}
