@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Ground truth: docs/CONTRACT.md. Base URL is overridable per-environment via
 // VITE_API_BASE_URL, defaulting to the live cloud backend.
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://sih-iigu.onrender.com'
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
