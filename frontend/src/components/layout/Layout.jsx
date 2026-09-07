@@ -16,6 +16,7 @@ const TITLES = {
   '/copilot': 'Kavach AI Assistant',
   '/graph': 'Knowledge Graph',
   '/report': 'Report Incident',
+  '/settings': 'Settings',
 }
 
 function titleFor(pathname) {

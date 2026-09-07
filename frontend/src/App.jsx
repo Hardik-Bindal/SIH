@@ -16,6 +16,7 @@ const LsrDashboard = lazy(() => import('./pages/LsrDashboard'))
 const Recommendations = lazy(() => import('./pages/Recommendations'))
 const Copilot = lazy(() => import('./pages/Copilot'))
 const KnowledgeGraph = lazy(() => import('./pages/KnowledgeGraph'))
+const Settings = lazy(() => import('./pages/Settings'))
 
 function PageFallback() {
   return (
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="/recommendations" element={<Recommendations />} />
           <Route path="/copilot" element={<Copilot />} />
           <Route path="/graph" element={<KnowledgeGraph />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>
     </Suspense>
