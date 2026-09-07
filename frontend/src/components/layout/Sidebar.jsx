@@ -19,6 +19,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   X,
+  Settings,
 } from 'lucide-react'
 
 /* ── Grouped navigation structure ──────────────────────────────────────── */
@@ -60,6 +61,12 @@ const NAV_GROUPS = [
       { to: '/graph', label: 'Knowledge Graph', icon: Share2 },
       { to: '/copilot', label: 'AI Copilot', icon: MessageSquareText },
     ],
+  },
+  {
+    id: 'system',
+    label: 'System',
+    icon: Settings,
+    to: '/settings',
   },
 ]
 

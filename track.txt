@@ -4,7 +4,7 @@
   Smart India Hackathon 2026 · Team The Last Commit
   Problem Domain: Industrial Safety (Oil India Limited)
 ================================================================================
-  Last Updated: 2026-09-02
+  Last Updated: 2026-09-07
   Maintained by: Hardik Bindal
   GitHub Repository: https://github.com/Hardik-Bindal/SIH
 ================================================================================
@@ -95,11 +95,13 @@ intelligence. It produces:
 
 The system is built end-to-end on two real OSHA (Occupational Safety & Health
 Administration) public datasets:
-  - osha_incidents.csv: 4,847 mixed-severity incident narratives
-  - osha_fatalities.csv: 14,914 confirmed fatality narratives
+  - osha_incidents.csv: 4,847 raw rows → 4,813 after cleaning & deduplication
+  - osha_fatalities.csv: 14,914 raw rows → 11,436 after cleaning & deduplication
 
-After cleaning and deduplication, the combined corpus is approximately 16,249
-records (verified live corpus_size 2026-09-02: 16,299 including live submissions).
+After cleaning and deduplication, the combined corpus is exactly 16,249
+records (from etl_summary.json: incidents_total=4,813 + fatalities_total=11,436).
+SIF-positive incidents: 3,501 of 4,813 (72.7% rate — reflecting OSHA fatal/
+severe injury bias in the source dataset). Live submissions add on top via MongoDB.
 
 
 ================================================================================
@@ -183,9 +185,9 @@ ROOT/
 ├── ml/
 │   ├── pipeline/
 │   │   ├── etl.py                      ETL: clean, dedupe, label, split (298 lines)
-│   │   ├── ner.py                      Entity extraction: gazetteer + regex (169 lines)
+│   │   ├── ner.py                      Entity extraction: gazetteer + regex (268 lines)
 │   │   ├── embeddings.py               TF-IDF/SVD encoder + FAISS index (201 lines)
-│   │   └── inference.py                Live single-report analysis engine (171 lines)
+│   │   └── inference.py                Live single-report analysis engine (316 lines)
 │   │
 │   ├── models/
 │   │   ├── train_sif_classifier.py     SIF classifier training (134 lines)
@@ -263,19 +265,20 @@ ROOT/
 │   ├── public/
 │   │   └── favicon.svg
 │   └── src/
-│       ├── main.jsx                    React entry point
-│       ├── App.jsx                     Router + lazy-loaded pages (56 lines)
-│       ├── index.css                   Global CSS + design system (371 lines)
+│       ├── main.jsx                    React entry point (29 lines)
+│       ├── App.jsx                     Router + lazy-loaded pages (58 lines)
+│       ├── index.css                   Global CSS + design system (~370 lines)
 │       ├── api/
-│       │   ├── client.js               Axios instance + interceptors (33 lines)
+│       │   ├── client.js               Axios instance + interceptors (33 lines, 60s timeout)
 │       │   ├── endpoints.js            API function wrappers (93 lines)
-│       │   └── queries.js              React Query hooks (108 lines approx)
+│       │   └── queries.js              React Query hooks (144 lines)
 │       ├── lib/
-│       │   ├── format.js               Number/date formatters
-│       │   ├── riskBands.js            Risk band color + style helpers
+│       │   ├── format.js               Number/date/text formatters (45 lines)
+│       │   ├── riskBands.js            Risk band color + style helpers (69 lines)
 │       │   ├── patternSeverity.js      Pattern severity style helpers
-│       │   ├── memoryVerdicts.js        Memory verdict display helpers
-│       │   └── theme.js               Theme (dark/light) toggle utility
+│       │   ├── memoryVerdicts.js       Memory verdict display helpers
+│       │   ├── theme.js               Theme (dark/light) toggle utility (44 lines)
+│       │   └── generateIncidentPdf.js  Client-side PDF generation via jsPDF (~25 KB)
 │       ├── store/
 │       │   └── filterStore.js          Zustand filter state store
 │       ├── components/
@@ -291,9 +294,10 @@ ROOT/
 │       │   │   ├── Skeleton.jsx        Loading skeleton component
 │       │   │   └── SyntheticBadge.jsx  "Synthetic data" disclosure badge
 │       │   ├── copilot/               AI Copilot components
-│       │   │   ├── CopilotChat.jsx    Chat interface with citations
-│       │   │   ├── StructuredQueryPanel.jsx  Multi-constraint query UI
-│       │   │   └── StructuredResultView.jsx  Structured query results
+│       │   │   ├── CopilotChat.jsx         Chat interface with citations (10.3 KB)
+│       │   │   ├── FloatingAssistant.jsx   Persistent floating AI button (4.6 KB)
+│       │   │   ├── StructuredQueryPanel.jsx  Multi-constraint query UI (14 KB)
+│       │   │   └── StructuredResultView.jsx  Structured query results (8.5 KB)
 │       │   ├── diagrams/              Visual diagram components
 │       │   │   ├── PipelineFlow.jsx   AI pipeline flow visualisation
 │       │   │   └── RiskFusionBar.jsx  Risk score breakdown bar
@@ -347,7 +351,7 @@ ROOT/
 -----------------
 
 Source 1: osha_incidents.csv
-  - Records:          4,847 rows
+  - Records:          4,847 raw rows
   - Content:          Mixed-severity incident narratives
   - Key fields:       summary_nr, Abstract Text, Event Description,
                       Degree of Injury, Nature of Injury, Event type,
@@ -355,17 +359,18 @@ Source 1: osha_incidents.csv
                       End Use, Event Date
   - SIF labelling:    Fatal Degree-of-Injury OR high-severity Nature-of-Injury
                       (Amputation/Crushing, Electrocution, Asphyxiation/Drowning)
-  - Post-cleaning:    ~4,700 rows after dedup (exact + near-duplicate removal)
-  - SIF positive rate: ~20–25% of cleaned rows
+  - Post-cleaning:    4,813 rows (from etl_summary.json: incidents_total=4,813)
+  - SIF positive rate: 72.7% (3,501 of 4,813) — high because OSHA fatality/
+                       severe injury records dominate the source (by design)
 
 Source 2: osha_fatalities.csv
-  - Records:          14,914 rows
+  - Records:          14,914 raw rows
   - Content:          Confirmed fatality narratives (outcome is fatal by def.)
   - Key fields:       id, description, incident_date, city, state, plan, citation
   - Used as:          Knowledge base for retrieval / Fatality Twin (not training)
-  - Post-cleaning:    ~11,500 rows after dedup
+  - Post-cleaning:    11,436 rows (from etl_summary.json: fatalities_total=11,436)
 
-Combined corpus after cleaning: ~16,249 records
+Combined corpus after cleaning: 16,249 records (etl_summary: combined_vector_corpus_size=16,249)
 
 
 4.2  ETL PIPELINE (ml/pipeline/etl.py)
@@ -430,7 +435,7 @@ Department List (7 synthetic departments):
 4.3  NER / ENTITY EXTRACTION (ml/pipeline/ner.py)
 -------------------------------------------------
 
-File: ml/pipeline/ner.py (263 lines — expanded from original 169)
+File: ml/pipeline/ner.py (268 lines — expanded from original 169)
 
 Uses spaCy blank English pipeline + EntityRuler (no downloaded model needed).
 
@@ -690,8 +695,8 @@ Output: ml/artifacts/incidents_scored.jsonl, aggregates.json
 4.14  INFERENCE ENGINE (ml/pipeline/inference.py)
 -------------------------------------------------
 
-File: ml/pipeline/inference.py (311 lines — significantly expanded post-audit)
-Model version: "kavach-v2.0-tfidf-xgb"
+File: ml/pipeline/inference.py (316 lines — significantly expanded post-audit)
+Model version: "kavach-v2.0-tfidf-xgb" / "sif-sentinel-v1.0-tfidf-xgb" (health endpoint)
 
 The central InferenceEngine class that ties all AI components together.
 Loaded as a singleton in the backend. Used for both:
@@ -1060,7 +1065,7 @@ Map integration:
   - Cytoscape dark mode background
 
 
-6.3  PAGES (12 TOTAL)
+6.3  PAGES (14 TOTAL)
 ---------------------
 
 1. Landing.jsx (34,961 bytes)
@@ -1232,6 +1237,13 @@ Map integration:
     Data: GET /graph
     Status: WORKING ✅
 
+13. Settings.jsx (1.8 KB)
+    Route: /settings
+    Purpose: App settings and preferences
+    Features:
+      - Dark/light theme toggle
+    Status: WORKING ✅
+
 
 6.4  COMPONENTS (6 DIRECTORIES, 25+ COMPONENTS)
 ------------------------------------------------
@@ -1250,13 +1262,13 @@ common/ (10 components):
 
 copilot/ (4 components):
   - CopilotChat.jsx:          Chat interface with message history, citation
-                              chips, intent tags, grounded indicator
+                              chips, intent tags, grounded indicator (10.3 KB)
   - FloatingAssistant.jsx:    Persistent floating AI chat button (bottom-right)
                               that expands to full CopilotChat. Rendered in
-                              Layout across all non-landing routes.
-  - StructuredQueryPanel.jsx: Multi-constraint query input with examples
+                              Layout across all non-landing routes (4.6 KB)
+  - StructuredQueryPanel.jsx: Multi-constraint query input with examples (14 KB)
   - StructuredResultView.jsx: Results display with applied filters, aggregate
-                              summary, result table, relaxation suggestions
+                              summary, result table, relaxation suggestions (8.5 KB)
 
 diagrams/ (2 components):
   - PipelineFlow.jsx:         CSS-based AI pipeline flow diagram with SVG
@@ -1289,19 +1301,21 @@ memory/ (2 components):
 ----------------------------------
 
 client.js (33 lines):
-  - Axios instance with baseURL from VITE_API_BASE_URL
-  - 20-second timeout
+  - Axios instance with baseURL from VITE_API_BASE_URL (default: https://sih-iigu.onrender.com)
+  - 60-second timeout (long for Render cold-start)
   - X-Tunnel-Skip-AntiPhishing-Page header (for devtunnels)
   - Response interceptor: normalises { error: { code, message } } envelope
     into regular Error objects for React Query
 
 endpoints.js (93 lines):
-  - 20 API function wrappers mapping 1:1 to backend routes
+  - 22 API function wrappers mapping 1:1 to backend routes in docs/CONTRACT.md
   - All return response.data (unwrapped from Axios response)
+  - generateBulletin uses responseType: 'blob' for PDF download
 
-queries.js (~108 lines):
-  - React Query hooks (useQuery / useMutation) wrapping endpoints
-  - Configured with appropriate staleTime, refetchOnWindowFocus settings
+queries.js (144 lines):
+  - React Query hooks (useQuery / useMutation) wrapping all endpoints
+  - STALE_ANALYTICS = 60,000 ms for all analytics/aggregate queries
+  - useSubmitIncident invalidates 'incidents' + 'kpis' cache on success
 
 
 6.6  LIBRARIES / UTILITIES (frontend/src/lib/)
@@ -1742,6 +1756,31 @@ DATE: 2026-09-02 (Final Documentation Sync)
   - Status: DOCUMENTATION IN SYNC WITH IMPLEMENTATION.
 
 
+DATE: 2026-09-07 (Full Project Documentation Rewrite)
+  - COMPLETE REWRITE of extra/work.txt into a definitive, exhaustive project
+    reference document (1,893 lines, ~82 KB):
+    · Updated corpus counts to match etl_summary.json ground truth:
+      incidents_total=4,813 (was "~4,700"), sif_positive=3,501 (72.7% rate),
+      fatalities_total=11,436 (was "~11,500"), combined=16,249.
+    · Documented all 16 major sections covering every file, algorithm, formula,
+      data flow, API endpoint, frontend component, and design decision.
+    · Corrected inference.py line count to 316 (was 311).
+    · Corrected ner.py line count to 268 (was 263).
+    · Corrected queries.js line count to 144 (was 108).
+    · Corrected client.js timeout to 60s (was 20s in track.txt).
+    · Added generateIncidentPdf.js to lib/ directory listing.
+    · Confirmed FloatingAssistant.jsx is in copilot/ (not layout/).
+    · Confirmed App.jsx has 58 lines (not 56).
+    · Confirmed main.jsx has 29 lines.
+    · Added complete 5-step workflow diagrams for ML pipeline build,
+      backend startup, live incident submission, copilot query, and
+      structured query flows.
+  - UPDATED track.txt:
+    · Synchronised all line counts, corpus numbers, and component details
+      to match current implementation.
+    · Last sync updated to 2026-09-07.
+
+
   12. FUTURE UPDATES & IMPROVEMENTS NEEDED
 ================================================================================
 
@@ -1808,10 +1847,15 @@ LOW PRIORITY (future enhancements):
 ================================================================================
   Total tracked files: ~130+
   Total lines of code: ~58,000+
-  Total tracked API endpoints: 20
-  Total tracked frontend pages: 13 (12 interior + Landing)
+  Total tracked API endpoints: 22
+  Total tracked frontend pages: 14 (13 interior + Landing)
   Total tracked components: 28+ (incl. FloatingAssistant)
   Total ML models/pipelines: 14
-  Total data records in corpus: ~16,249 (+ live submissions via MongoDB)
-  Last sync: 2026-09-02
+  Total data records in corpus: 16,249 exactly (per etl_summary.json)
+    · incidents_total:          4,813
+    · incidents_sif_positive:   3,501 (72.7%)
+    · fatalities_total:         11,436
+    · combined_vector_corpus:   16,249
+  + live submissions via MongoDB Atlas (persisted across restarts)
+  Last sync: 2026-09-07
 ================================================================================

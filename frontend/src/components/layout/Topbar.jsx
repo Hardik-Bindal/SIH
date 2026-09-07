@@ -1,44 +1,7 @@
-import { Menu, RotateCcw, Sun, Moon, Bell, Search as SearchIcon } from 'lucide-react'
+import { Menu, Bell, Search as SearchIcon } from 'lucide-react'
 import { useFilterStore, AREAS } from '../../store/filterStore'
 import { useSiteAnalytics } from '../../api/queries'
 import { rowLabel } from '../../lib/format'
-import { useTheme } from '../../lib/theme'
-
-function ThemeToggle() {
-  const { theme, toggle, isDark } = useTheme()
-  return (
-    <button
-      type="button"
-      onClick={toggle}
-      aria-label={`Switch to ${isDark ? 'light' : 'dark'} theme`}
-      title={`Switch to ${isDark ? 'light' : 'dark'} theme`}
-      className="group relative grid h-9 w-9 place-items-center overflow-hidden rounded-lg border border-line bg-surface text-fg-2
-        transition-all duration-250 ease-out-standard hover:border-line-2 hover:bg-surface-2 hover:text-fg
-        focus-visible:ring-2 focus-visible:ring-brand-500/40"
-    >
-      {/* Sun */}
-      <Sun
-        size={16}
-        className={`absolute transition-all duration-400 ease-spring
-          ${theme === 'light' ? 'translate-y-0 rotate-0 opacity-100' : '-translate-y-6 rotate-90 opacity-0'}`}
-        aria-hidden="true"
-      />
-      {/* Moon */}
-      <Moon
-        size={16}
-        className={`absolute transition-all duration-400 ease-spring
-          ${theme === 'dark' ? 'translate-y-0 rotate-0 opacity-100' : 'translate-y-6 -rotate-90 opacity-0'}`}
-        aria-hidden="true"
-      />
-      {/* Glow on hover */}
-      <span
-        aria-hidden="true"
-        className="absolute inset-0 rounded-lg bg-gradient-to-br from-brand-500/0 to-brand-500/0 transition-all duration-400
-          group-hover:from-brand-500/10 group-hover:to-brand-700/10"
-      />
-    </button>
-  )
-}
 
 const CONTROL =
   'h-9 rounded-lg border border-line bg-surface px-2.5 text-xs font-medium text-fg-2 transition-all duration-180 ' +
@@ -147,7 +110,6 @@ export default function Topbar({ onMenuClick, title }) {
             />
           </button>
 
-          <ThemeToggle />
         </div>
       </div>
     </header>
