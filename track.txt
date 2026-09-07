@@ -1301,7 +1301,7 @@ memory/ (2 components):
 ----------------------------------
 
 client.js (33 lines):
-  - Axios instance with baseURL from VITE_API_BASE_URL (default: https://sih-iigu.onrender.com)
+  - Axios instance with baseURL from VITE_API_BASE_URL (default: http://localhost:8000)
   - 60-second timeout (long for Render cold-start)
   - X-Tunnel-Skip-AntiPhishing-Page header (for devtunnels)
   - Response interceptor: normalises { error: { code, message } } envelope
@@ -1525,8 +1525,8 @@ GITHUB:
 
 CLOUD DEPLOYMENT (PLANNED):
   - Frontend: Vercel (free tier, auto-builds Vite/React)
-  - Backend: Render.com (free tier, Docker-based deployment)
-  - Environment variable: VITE_API_BASE_URL pointed to Render backend URL
+  - Backend: Localhost default for testing (Render.com free tier available but slow)
+  - Environment variable: VITE_API_BASE_URL pointed to local or Render backend URL
 
 
 ================================================================================
