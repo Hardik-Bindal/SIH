@@ -43,7 +43,7 @@ const SITE_COORDS = {
   'Field Workshop Duliajan': [27.36, 95.36],
 }
 const MAP_CENTER = [27.32, 95.38]
-const MAP_ZOOM = 11
+const MAP_ZOOM = 12
 
 /* ── Risk color constants ─────────────────────────────────────────────── */
 const RISK_COLORS = {
@@ -134,10 +134,12 @@ function GeographicRiskMap({ siteData, highlightedSite, onSiteClick }) {
         className="h-full w-full rounded-xl"
         style={{ minHeight: 460, background: '#0a0f1a' }}
       >
+        {/* Base dark tile — CartoDB Dark Matter with full labels (cities, towns, roads) */}
         <TileLayer
-          url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
-          attribution='&copy; <a href="https://www.esri.com/">Esri</a>, HERE, Garmin, FAO, NOAA, USGS'
-          maxZoom={16}
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          subdomains="abcd"
+          maxZoom={19}
         />
         <MapControls />
         {sites.map((site) => (
