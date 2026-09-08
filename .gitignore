@@ -39,3 +39,6 @@ frontend/.vite/
 
 # Extra/scratch notes
 extra/
+
+# Downloaded offline speech models (see backend/models/tts/README.md)
+backend/models/tts/*.onnx

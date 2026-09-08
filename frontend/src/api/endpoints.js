@@ -84,6 +84,16 @@ export const structuredQuery = (query) =>
 export const getGraph = (params = {}) =>
   apiClient.get('/api/v1/graph', { params }).then((r) => r.data)
 
+// ---- Upload --------------------------------------------------------------
+
+export const extractTextFromPdf = (file) => {
+  const form = new FormData()
+  form.append('file', file)
+  return apiClient
+    .post('/api/v1/upload/extract-text', form)
+    .then((r) => r.data)
+}
+
 // ---- Bulletin ------------------------------------------------------------
 
 export const generateBulletin = (payload) =>

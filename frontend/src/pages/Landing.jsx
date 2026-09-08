@@ -245,7 +245,7 @@ export default function Landing() {
                   <ArrowRight size={16} aria-hidden="true" />
                 </Link>
                 <Link
-                  to="/memory"
+                  to="/knowledge"
                   className="btn-secondary px-6 py-3 shadow-sm"
                 >
                   <Brain size={16} aria-hidden="true" className="text-brand-500 animate-pulse-soft" />
@@ -366,7 +366,7 @@ export default function Landing() {
                     </li>
                   ))}
                 </ul>
-                <Link to="/memory" className="btn-primary mt-8 shadow-md">
+                <Link to="/knowledge" className="btn-primary mt-8 shadow-md">
                   Open Safety Memory
                   <ArrowRight size={15} aria-hidden="true" />
                 </Link>
@@ -484,7 +484,7 @@ export default function Landing() {
                     </li>
                   ))}
                 </ul>
-                <Link to="/copilot" className="btn-primary mt-8 shadow-md">
+                <Link to="/dashboard" className="btn-primary mt-8 shadow-md">
                   Ask the Copilot
                   <ArrowRight size={15} aria-hidden="true" />
                 </Link>

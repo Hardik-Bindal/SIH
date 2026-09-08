@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  MapContainer, TileLayer, CircleMarker, Popup, useMap,
+  MapContainer, TileLayer, CircleMarker, Popup, Tooltip as LTooltip, useMap,
 } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import {
@@ -100,8 +100,25 @@ function MapControls() {
   )
 }
 
+/* ── Fly to highlighted site ──────────────────────────────────────────── */
+function FlyToSite({ site }) {
+  const map = useMap()
+  useEffect(() => {
+    if (site && SITE_COORDS[site]) {
+      map.flyTo(SITE_COORDS[site], 14, { duration: 0.8 })
+    }
+  }, [site, map])
+  return null
+}
+
 /* ── Geographic Risk Map ──────────────────────────────────────────────── */
 function GeographicRiskMap({ siteData, highlightedSite, onSiteClick }) {
+  // ESRI dark gray basemap needs no API key. A venue firewall or offline
+  // laptop can still block the tile CDN. When that happens we drop the
+  // basemap and keep the markers on the themed backdrop rather than
+  // showing a broken grey grid.
+  const [tilesBlocked, setTilesBlocked] = useState(false)
+
   const sites = useMemo(() => {
     if (!siteData) return []
     return siteData
@@ -125,7 +142,7 @@ function GeographicRiskMap({ siteData, highlightedSite, onSiteClick }) {
   }, [siteData])
 
   return (
-    <div className="relative h-full w-full" style={{ minHeight: 460 }}>
+    <div className={`relative h-full w-full ${tilesBlocked ? 'no-basemap' : ''}`} style={{ minHeight: 460 }}>
       <MapContainer
         center={MAP_CENTER}
         zoom={MAP_ZOOM}
@@ -134,14 +151,18 @@ function GeographicRiskMap({ siteData, highlightedSite, onSiteClick }) {
         className="h-full w-full rounded-xl"
         style={{ minHeight: 460, background: '#0a0f1a' }}
       >
-        {/* Base dark tile — CartoDB Dark Matter with full labels (cities, towns, roads) */}
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          subdomains="abcd"
-          maxZoom={19}
-        />
+        {/* Base dark tile — ESRI World Dark Gray Canvas.
+            Free public endpoint: no API key or account required. */}
+        {!tilesBlocked && (
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+            attribution='Tiles &copy; <a href="https://www.esri.com/">Esri</a> &mdash; Esri, DeLorme, NAVTEQ'
+            maxZoom={16}
+            eventHandlers={{ tileerror: () => setTilesBlocked(true) }}
+          />
+        )}
         <MapControls />
+        <FlyToSite site={highlightedSite} />
         {sites.map((site) => (
           <CircleMarker
             key={site.site}
@@ -158,6 +179,17 @@ function GeographicRiskMap({ siteData, highlightedSite, onSiteClick }) {
               click: () => onSiteClick?.(site.site),
             }}
           >
+            <LTooltip
+              direction="top"
+              offset={[0, -site.radius]}
+              opacity={0.95}
+              className="kavach-map-tooltip"
+            >
+              <span style={{ fontWeight: 700, fontSize: 11 }}>{site.site}</span>
+              <br />
+              <span style={{ color: site.color, fontWeight: 700, fontSize: 10 }}>{site.band}</span>
+              <span style={{ marginLeft: 6, fontSize: 10, opacity: 0.7 }}>{formatNumber(site.report_count)} reports</span>
+            </LTooltip>
             <Popup>
               <div className="min-w-[180px] space-y-2 p-1">
                 <div className="flex items-center gap-2">
@@ -213,6 +245,13 @@ function GeographicRiskMap({ siteData, highlightedSite, onSiteClick }) {
           {sites.filter((s) => s.band === 'CRITICAL').length} critical
         </span>
       </div>
+
+      {tilesBlocked && (
+        <div className="absolute bottom-3 right-3 z-[1000] flex items-center gap-1.5 rounded-lg border border-yellow-500/25 bg-yellow-500/10 px-2.5 py-1.5 text-2xs font-semibold text-yellow-400 backdrop-blur-sm">
+          <AlertTriangle size={11} aria-hidden="true" />
+          Basemap offline — risk markers still live
+        </div>
+      )}
     </div>
   )
 }

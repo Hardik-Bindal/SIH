@@ -108,7 +108,7 @@ export default function IncidentExplorer() {
           <label className="sr-only" htmlFor="explorer-area">
             Filter by area
           </label>
-          <select id="explorer-area" value={area} onChange={(e) => setArea(e.target.value)} className={FILTER}>
+          <select id="explorer-area" value={area} onChange={(e) => { setArea(e.target.value); setPage(1) }} className={FILTER}>
             <option value="">All areas</option>
             {AREAS.map((a) => (
               <option key={a} value={a}>
