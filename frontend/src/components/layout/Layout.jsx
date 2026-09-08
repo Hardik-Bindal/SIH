@@ -6,16 +6,11 @@ import FloatingAssistant from '../copilot/FloatingAssistant'
 
 const TITLES = {
   '/dashboard': 'Executive Dashboard',
-  '/incidents': 'Incident Explorer',
-  '/memory': 'Safety Memory',
-  '/sites': 'Site Intelligence',
-  '/areas': 'Area Intelligence',
-  '/hazards': 'Hazard Analytics',
-  '/lsr': 'Life Saving Rule Dashboard',
-  '/recommendations': 'AI Recommendations',
-  '/copilot': 'Kavach AI Assistant',
-  '/graph': 'Knowledge Graph',
-  '/report': 'Report Incident',
+  '/incidents': 'Incidents',
+  '/risk': 'Risk Intelligence',
+  '/hazards-lsr': 'Hazard & LSR Analytics',
+  '/knowledge': 'Knowledge',
+  '/report': 'Submit Narrative',
   '/settings': 'Settings',
 }
 

@@ -508,7 +508,15 @@
 /* Leaflet fixes */
 .leaflet-container img { max-width: none; }
 .leaflet-container { background: rgb(var(--color-surface-2)); }
-.no-basemap .leaflet-container { background: transparent; }
+/* Basemap unavailable (offline / blocked CDN): keep a readable graticule so
+   the risk markers still sit on something legible instead of a void. */
+.no-basemap .leaflet-container {
+  background-color: #0a0f1a !important;
+  background-image:
+    linear-gradient(rgba(99, 155, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 155, 255, 0.08) 1px, transparent 1px) !important;
+  background-size: 48px 48px !important;
+}
 
 /* Dark mode Leaflet tile filter for cohesive look */
 .dark .leaflet-tile {
@@ -521,6 +529,25 @@
   color: rgb(var(--color-fg));
   box-shadow: var(--shadow-lifted);
 }
+
+.kavach-map-tooltip {
+  background: rgb(var(--color-surface)) !important;
+  color: rgb(var(--color-fg)) !important;
+  border: 1px solid rgb(var(--color-line)) !important;
+  border-radius: 8px !important;
+  padding: 4px 8px !important;
+  font-family: var(--font-sans, system-ui), sans-serif !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important;
+}
+.kavach-map-tooltip::before {
+  border-top-color: rgb(var(--color-line)) !important;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
 
 /* Cytoscape dark mode */
 .dark .__cytoscape_container { background: rgb(var(--color-surface-2)) !important; }

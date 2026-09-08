@@ -1,4 +1,4 @@
-import { Menu, Bell, Search as SearchIcon } from 'lucide-react'
+import { Menu, Bell, Search as SearchIcon, RotateCcw } from 'lucide-react'
 import { useFilterStore, AREAS } from '../../store/filterStore'
 import { useSiteAnalytics } from '../../api/queries'
 import { rowLabel } from '../../lib/format'
