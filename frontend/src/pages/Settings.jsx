@@ -16,6 +16,7 @@ export default function Settings() {
   const [showInput, setShowInput] = useState(false)
   const [keySaved, setKeySaved] = useState(false)
   const [maskedDisplay, setMaskedDisplay] = useState('')
+  const [saveTimerId, setSaveTimerId] = useState(null)
 
   useEffect(() => {
     try {
@@ -25,18 +26,23 @@ export default function Settings() {
         setMaskedDisplay(maskKey(stored))
       }
     } catch { /* storage unavailable */ }
-  }, [])
+    return () => {
+      if (saveTimerId) clearTimeout(saveTimerId)
+    }
+  }, [saveTimerId])
 
   function handleSaveKey() {
     if (!keyInput.trim()) return
     try {
+      if (saveTimerId) clearTimeout(saveTimerId)
       localStorage.setItem(API_KEY_STORAGE, keyInput.trim())
       setHasKey(true)
       setMaskedDisplay(maskKey(keyInput.trim()))
       setKeyInput('')
       setShowInput(false)
       setKeySaved(true)
-      setTimeout(() => setKeySaved(false), 2000)
+      const timerId = setTimeout(() => setKeySaved(false), 2000)
+      setSaveTimerId(timerId)
     } catch { /* storage unavailable */ }
   }
 
@@ -100,7 +106,7 @@ export default function Settings() {
           <p className="mt-1 text-xs text-fg-3">
             KAVACH&apos;s scoring pipeline runs fully offline on self-hosted models — no external
             key is required for any feature. This slot is reserved for optional third-party AI
-            enrichment. The key is stored only in your browser and is never displayed after saving.
+            enrichment. The key is stored only in your browser; the full key is never shown after saving.
           </p>
 
           <div className="mt-4 space-y-3">
@@ -132,6 +138,8 @@ export default function Settings() {
                   type="button"
                   onClick={() => setShowInput((v) => !v)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-fg-3 hover:text-fg-2"
+                  aria-label={showInput ? 'Hide API key' : 'Show API key'}
+                  aria-pressed={showInput}
                   title={showInput ? 'Hide input' : 'Show input'}
                 >
                   {showInput ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -162,7 +170,7 @@ export default function Settings() {
             </div>
 
             <p className="text-2xs text-fg-3 leading-relaxed">
-              Your API key is stored only in this browser&apos;s local storage. It is never sent to our servers or displayed after saving. To update, enter a new key and save.
+              Your API key is stored only in this browser&apos;s local storage. It is never sent to our servers; the full key is never shown after saving. To update, enter a new key and save.
             </p>
           </div>
         </section>

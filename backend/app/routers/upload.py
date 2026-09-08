@@ -44,7 +44,7 @@ async def extract_text_from_pdf(file: UploadFile = File(...)):
             status_code=503,
             detail={"error": {
                 "code": "PDF_ENGINE_UNAVAILABLE",
-                "message": f"PDF text extraction is unavailable on this server: {_PDF_IMPORT_ERROR}",
+                "message": "PDF text extraction is unavailable on this server. Please contact support.",
             }},
         )
 

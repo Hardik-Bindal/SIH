@@ -90,9 +90,7 @@ export const extractTextFromPdf = (file) => {
   const form = new FormData()
   form.append('file', file)
   return apiClient
-    .post('/api/v1/upload/extract-text', form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
+    .post('/api/v1/upload/extract-text', form)
     .then((r) => r.data)
 }
 

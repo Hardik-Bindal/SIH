@@ -73,7 +73,8 @@ export default function ReportIncident() {
 
   async function handlePdfUpload(file) {
     if (!file) return
-    if (file.type !== 'application/pdf') {
+    const isPdf = file.type === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf')
+    if (!isPdf) {
       setErrorMsg('Only PDF files are accepted.')
       return
     }
