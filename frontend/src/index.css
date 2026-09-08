@@ -508,7 +508,15 @@
 /* Leaflet fixes */
 .leaflet-container img { max-width: none; }
 .leaflet-container { background: rgb(var(--color-surface-2)); }
-.no-basemap .leaflet-container { background: transparent; }
+/* Basemap unavailable (offline / blocked CDN): keep a readable graticule so
+   the risk markers still sit on something legible instead of a void. */
+.no-basemap .leaflet-container {
+  background-color: #0a0f1a !important;
+  background-image:
+    linear-gradient(rgba(99, 155, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 155, 255, 0.08) 1px, transparent 1px) !important;
+  background-size: 48px 48px !important;
+}
 
 /* Dark mode Leaflet tile filter for cohesive look */
 .dark .leaflet-tile {

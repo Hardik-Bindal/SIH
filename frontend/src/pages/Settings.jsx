@@ -95,9 +95,12 @@ export default function Settings() {
           <div className="flex items-center gap-2">
             <Key size={16} className="text-brand-500" />
             <h3 className="text-sm font-semibold text-fg">AI API Key</h3>
+            <span className="rounded-full bg-surface-2 px-2 py-0.5 text-2xs font-bold text-fg-3">Optional</span>
           </div>
           <p className="mt-1 text-xs text-fg-3">
-            Configure an external AI service API key for enhanced analysis features. The key is stored locally in your browser and never displayed after saving.
+            KAVACH&apos;s scoring pipeline runs fully offline on self-hosted models — no external
+            key is required for any feature. This slot is reserved for optional third-party AI
+            enrichment. The key is stored only in your browser and is never displayed after saving.
           </p>
 
           <div className="mt-4 space-y-3">

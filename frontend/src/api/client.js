@@ -18,10 +18,16 @@ export const apiClient = axios.create({
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    const apiMessage = error?.response?.data?.error?.message
+    // Two envelopes reach us: the global handler in main.py returns
+    // { error: {...} } directly, while every HTTPException(detail={...}) is
+    // nested by FastAPI as { detail: { error: {...} } }. Read both, or a
+    // 404/400 surfaces as the useless "Request failed with status code 404".
+    const data = error?.response?.data
+    const payload = data?.error || data?.detail?.error
+    const apiMessage = payload?.message || (typeof data?.detail === 'string' ? data.detail : null)
     if (apiMessage) {
       const wrapped = new Error(apiMessage)
-      wrapped.code = error?.response?.data?.error?.code
+      wrapped.code = payload?.code
       wrapped.status = error?.response?.status
       return Promise.reject(wrapped)
     }

@@ -113,6 +113,12 @@ function FlyToSite({ site }) {
 
 /* ── Geographic Risk Map ──────────────────────────────────────────────── */
 function GeographicRiskMap({ siteData, highlightedSite, onSiteClick }) {
+  // The CARTO basemap needs no API key, but a venue firewall or an offline
+  // laptop can still block the tile CDN. When that happens we drop the
+  // basemap and keep the markers on the themed backdrop rather than
+  // showing a broken grey grid.
+  const [tilesBlocked, setTilesBlocked] = useState(false)
+
   const sites = useMemo(() => {
     if (!siteData) return []
     return siteData
@@ -136,7 +142,7 @@ function GeographicRiskMap({ siteData, highlightedSite, onSiteClick }) {
   }, [siteData])
 
   return (
-    <div className="relative h-full w-full" style={{ minHeight: 460 }}>
+    <div className={`relative h-full w-full ${tilesBlocked ? 'no-basemap' : ''}`} style={{ minHeight: 460 }}>
       <MapContainer
         center={MAP_CENTER}
         zoom={MAP_ZOOM}
@@ -145,13 +151,17 @@ function GeographicRiskMap({ siteData, highlightedSite, onSiteClick }) {
         className="h-full w-full rounded-xl"
         style={{ minHeight: 460, background: '#0a0f1a' }}
       >
-        {/* Base dark tile — CartoDB Dark Matter with full labels (cities, towns, roads) */}
-        <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          subdomains="abcd"
-          maxZoom={19}
-        />
+        {/* Base dark tile — CartoDB Dark Matter with full labels (cities, towns,
+            roads). Free public endpoint: no API key or account required. */}
+        {!tilesBlocked && (
+          <TileLayer
+            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            subdomains="abcd"
+            maxZoom={19}
+            eventHandlers={{ tileerror: () => setTilesBlocked(true) }}
+          />
+        )}
         <MapControls />
         <FlyToSite site={highlightedSite} />
         {sites.map((site) => (
@@ -236,6 +246,13 @@ function GeographicRiskMap({ siteData, highlightedSite, onSiteClick }) {
           {sites.filter((s) => s.band === 'CRITICAL').length} critical
         </span>
       </div>
+
+      {tilesBlocked && (
+        <div className="absolute bottom-3 right-3 z-[1000] flex items-center gap-1.5 rounded-lg border border-yellow-500/25 bg-yellow-500/10 px-2.5 py-1.5 text-2xs font-semibold text-yellow-400 backdrop-blur-sm">
+          <AlertTriangle size={11} aria-hidden="true" />
+          Basemap offline — risk markers still live
+        </div>
+      )}
     </div>
   )
 }
