@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
 from app.routers import (  # noqa: E402
-    health, incidents, search, analytics, forecast, recommendations, copilot, graph, bulletin, memory, upload,
+    health, incidents, search, analytics, forecast, recommendations, copilot, graph, bulletin, memory, upload, speech,
 )
 
 app = FastAPI(
@@ -34,7 +34,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for r in (health, incidents, search, analytics, forecast, recommendations, copilot, graph, bulletin, memory, upload):
+for r in (health, incidents, search, analytics, forecast, recommendations, copilot, graph, bulletin, memory, upload, speech):
     app.include_router(r.router)
 
 

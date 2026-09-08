@@ -1,5 +1,6 @@
 import { Printer, GraduationCap, Megaphone } from 'lucide-react'
 import EmptyState from '../common/EmptyState'
+import RecommendationAudio from './RecommendationAudio'
 
 const PRIORITY_STYLES = {
   C1: 'bg-risk-critical-bg text-risk-critical ring-risk-critical-border',
@@ -99,6 +100,8 @@ export default function CapaPanel({ reportId, recommendations, onExport }) {
           Export / Print
         </button>
       </div>
+
+      <RecommendationAudio key={`${reportId}:${JSON.stringify(recommendations)}`} recommendations={recommendations} />
 
       <ActionList title="Corrective actions" actions={recommendations.corrective_actions} />
       <ActionList title="Preventive actions" actions={recommendations.preventive_actions} />
