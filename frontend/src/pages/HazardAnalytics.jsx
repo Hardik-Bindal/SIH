@@ -113,7 +113,7 @@ function FlyToSite({ site }) {
 
 /* ── Geographic Risk Map ──────────────────────────────────────────────── */
 function GeographicRiskMap({ siteData, highlightedSite, onSiteClick }) {
-  // The CARTO basemap needs no API key, but a venue firewall or an offline
+  // ESRI dark gray basemap needs no API key. A venue firewall or offline
   // laptop can still block the tile CDN. When that happens we drop the
   // basemap and keep the markers on the themed backdrop rather than
   // showing a broken grey grid.
@@ -151,14 +151,13 @@ function GeographicRiskMap({ siteData, highlightedSite, onSiteClick }) {
         className="h-full w-full rounded-xl"
         style={{ minHeight: 460, background: '#0a0f1a' }}
       >
-        {/* Base dark tile — CartoDB Dark Matter with full labels (cities, towns,
-            roads). Free public endpoint: no API key or account required. */}
+        {/* Base dark tile — ESRI World Dark Gray Canvas.
+            Free public endpoint: no API key or account required. */}
         {!tilesBlocked && (
           <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            subdomains="abcd"
-            maxZoom={19}
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+            attribution='Tiles &copy; <a href="https://www.esri.com/">Esri</a> &mdash; Esri, DeLorme, NAVTEQ'
+            maxZoom={16}
             eventHandlers={{ tileerror: () => setTilesBlocked(true) }}
           />
         )}
